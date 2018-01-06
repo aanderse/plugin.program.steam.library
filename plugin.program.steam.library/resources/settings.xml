@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+    <setting id="debug" type="bool" label="Enable debugging mode" default="false"/>
+    <setting id="steam-id" type="text" label="Your Steam user id"/>
+    <setting id="steam-key" type="text" label="Your Steam web API key"/>
+    <setting id="steam-path" type="executable" label="Path to your Steam executable"/>
+    <setting type="sep"/>
+    <setting id="scan-time" type="time" label="Time to scan your Steam library" default="21:00"/>
+    <setting label="Scan your Steam library" type="action" action="RunPlugin(plugin://plugin.program.steam.library/scan)"/>
+</settings>
