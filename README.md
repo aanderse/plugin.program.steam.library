@@ -26,3 +26,8 @@ If the following dependencies are not pulled in you might require them too:
 - script.module.urllib3 
 
 After you install this plugin go into the settings and enter your 17 digit Steam ID, your Steam API key, and select the path to your Steam executable if it is not correct. You may need to restart Kodi after you enter this information.
+
+NOTE: Borrowed some images from these other great plugins:
+
+- https://github.com/BrosMakingSoftware/Kodi-Launches-Steam-Addon/
+- https://github.com/teeedubb/teeedubb-xbmc-repo/tree/master/script.steam.launcher
