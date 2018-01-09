@@ -2,6 +2,7 @@
 import os
 import requests
 import routing
+import subprocess
 import sys
 import time
 import xbmcaddon
@@ -77,7 +78,7 @@ def run(id):
     log('executing ' + __addon__.getSetting('steam-path') + ' steam://rungameid/' + id)
 
     # https://developer.valvesoftware.com/wiki/Steam_browser_protocol
-    os.system(__addon__.getSetting('steam-path') + ' steam://rungameid/' + id)
+    subprocess.call([__addon__.getSetting('steam-path'), 'steam://rungameid/' + id])
 
 if __name__ == '__main__':
 
