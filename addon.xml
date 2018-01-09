@@ -25,10 +25,10 @@
         <assets>
             <icon>icon.png</icon>
             <fanart>fanart.jpg</fanart>
-            <screenshot>screenshot-01.png</screenshot>
-            <screenshot>screenshot-02.png</screenshot>
-            <screenshot>screenshot-03.png</screenshot>
-            <screenshot>screenshot-04.png</screenshot>
+            <screenshot>screenshot-01.jpg</screenshot>
+            <screenshot>screenshot-02.jpg</screenshot>
+            <screenshot>screenshot-03.jpg</screenshot>
+            <screenshot>screenshot-04.jpg</screenshot>
         </assets>
     </extension>
 </addon>
