@@ -22,11 +22,6 @@ def log(msg, level=xbmc.LOGDEBUG):
 @plugin.route('/')
 def index():
 
-    if __addon__.getSetting('steam-id') == '' or __addon__.getSetting('steam-key') == '':
-
-        # ensure required data is available
-        return
-
     handle = int(sys.argv[1])
 
     xbmcplugin.addDirectoryItem(handle=handle, url=plugin.url_for(all), listitem=xbmcgui.ListItem('All games'), isFolder=True)
