@@ -63,6 +63,8 @@ def all():
         name = entry['name']
 
         item = xbmcgui.ListItem(name)
+
+        item.addContextMenuItems([('Play', 'RunPlugin(plugin://plugin.program.steam.library/run/' + str(appid) + ')'), ('Install', 'RunPlugin(plugin://plugin.program.steam.library/install/' + str(appid) + ')')])
         item.setArt({ 'thumb': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/header.jpg', 'fanart': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/page_bg_generated_v6b.jpg' })
 
         if not xbmcplugin.addDirectoryItem(handle=handle, url=plugin.url_for(run, id=str(appid)), listitem=item, totalItems=totalItems): break
@@ -111,6 +113,22 @@ def recent():
 
     xbmcplugin.addSortMethod(handle, xbmcplugin.SORT_METHOD_UNSORTED)
     xbmcplugin.endOfDirectory(handle, succeeded=True)
+
+@plugin.route('/install/<id>')
+def install(id):
+
+    if os.path.isfile(__addon__.getSetting('steam-path')) == False:
+
+        # ensure required data is available
+        notify = xbmcgui.Dialog()
+        notify.notification('Error', 'Unable to find your Steam executable, please check your settings.', xbmcgui.NOTIFICATION_ERROR)
+
+        return
+
+    log('executing ' + __addon__.getSetting('steam-path') + ' steam://install/' + id)
+
+    # https://developer.valvesoftware.com/wiki/Steam_browser_protocol
+    subprocess.call([__addon__.getSetting('steam-path'), 'steam://install/' + id])
 
 @plugin.route('/run/<id>')
 def run(id):
