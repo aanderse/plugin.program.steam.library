@@ -29,15 +29,26 @@ def index():
 
     handle = int(sys.argv[1])
 
+    xbmcplugin.addDirectoryItem(handle=handle, url=plugin.url_for(all), listitem=xbmcgui.ListItem('All games'), isFolder=True)
+    xbmcplugin.addDirectoryItem(handle=handle, url=plugin.url_for(recent), listitem=xbmcgui.ListItem('Recently played games'), isFolder=True)
+    xbmcplugin.endOfDirectory(handle, succeeded=True)
+
+@plugin.route('/all')
+def all():
+
+    if __addon__.getSetting('steam-id') == '' or __addon__.getSetting('steam-key') == '':
+
+        # ensure required data is available
+        return
+
+    handle = int(sys.argv[1])
+
     try:
 
         # query the steam web api for a full list of steam applications/games that belong to the user
         response = requests.get('https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=' + __addon__.getSetting('steam-key') + '&steamid=' + __addon__.getSetting('steam-id') + '&include_appinfo=1&format=json', timeout=10)
         response.raise_for_status()
 
-    #except requests.exceptions.HTTPError as e:
-    #except requests.exceptions.ConnectionError as e:
-    #except requests.exceptions.Timeout as e:
     except requests.exceptions.RequestException as e:
 
         # something went wrong, can't scan the steam library
@@ -62,6 +73,48 @@ def index():
         if not xbmcplugin.addDirectoryItem(handle=handle, url=plugin.url_for(run, id=str(appid)), listitem=item, totalItems=totalItems): break
 
     xbmcplugin.addSortMethod(handle, xbmcplugin.SORT_METHOD_LABEL)
+    xbmcplugin.endOfDirectory(handle, succeeded=True)
+
+@plugin.route('/recent')
+def recent():
+
+    if __addon__.getSetting('steam-id') == '' or __addon__.getSetting('steam-key') == '':
+
+        # ensure required data is available
+        return
+
+    handle = int(sys.argv[1])
+
+    try:
+
+        # query the steam web api for a full list of steam applications/games that belong to the user
+        response = requests.get('https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v0001/?key=' + __addon__.getSetting('steam-key') + '&steamid=' + __addon__.getSetting('steam-id') + '&include_appinfo=1&format=json', timeout=10)
+        response.raise_for_status()
+
+    except requests.exceptions.RequestException as e:
+
+        # something went wrong, can't scan the steam library
+        notify = xbmcgui.Dialog()
+        notify.notification('Error', 'An unexpected error has occurred while contacting Steam. Please ensure your Steam credentials are correct and then try again. If this problem persists please contact support.', xbmcgui.NOTIFICATION_ERROR)
+
+        log(str(e), xbmc.LOGERROR)
+
+        return
+
+    data = response.json()
+    totalItems = data['response']['total_count']
+
+    for entry in data['response']['games']:
+
+        appid = entry['appid']
+        name = entry['name']
+
+        item = xbmcgui.ListItem(name)
+        item.setArt({ 'thumb': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/header.jpg', 'fanart': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/page_bg_generated_v6b.jpg' })
+
+        if not xbmcplugin.addDirectoryItem(handle=handle, url=plugin.url_for(run, id=str(appid)), listitem=item, totalItems=totalItems): break
+
+    xbmcplugin.addSortMethod(handle, xbmcplugin.SORT_METHOD_UNSORTED)
     xbmcplugin.endOfDirectory(handle, succeeded=True)
 
 @plugin.route('/run/<id>')
