@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.program.steam.library" name="Steam Library" version="0.3.0" provider-name="aanderse">
+<addon id="plugin.program.steam.library" name="Steam Library" version="0.4.0" provider-name="aanderse">
     <requires>
         <import addon="xbmc.python" version="2.19.0" />
         <import addon="script.module.requests" version="2.18.4" />
@@ -21,9 +21,13 @@
             v0.2.0 (2018-01-07)
             - Performance improvements
             - Fixed bug which caused library to initially not show up under some circumstances
-            v0.3.0 (2018-07-09)
+            v0.3.0 (2018-01-09)
             - fixed a bug with games not launching under certain circumstances
             - cleaned up the screenshots as recommended by Razzeee
+            v0.4.0 (2018-01-18)
+            - added a recently played games menu
+            - added context menu with option to install a game
+            - improved startup time as recommended by Razzeee
         </news>
         <assets>
             <icon>icon.png</icon>
