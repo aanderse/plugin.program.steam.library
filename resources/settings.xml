@@ -4,4 +4,5 @@
     <setting id="steam-id" type="text" label="Your Steam user id"/>
     <setting id="steam-key" type="text" label="Your Steam web API key"/>
     <setting id="steam-path" type="executable" label="Path to your Steam executable"/>
+    <setting id="steam-args" type="text" label="Arguments to pass to your Steam executable"/>
 </settings>

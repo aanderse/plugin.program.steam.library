@@ -2,6 +2,7 @@
 import os
 import requests
 import routing
+import shlex
 import subprocess
 import sys
 import time
@@ -142,10 +143,12 @@ def run(id):
 
         return
 
-    log('executing ' + __addon__.getSetting('steam-path') + ' steam://rungameid/' + id)
+    userArgs = shlex.split(__addon__.getSetting('steam-args'))
+
+    log('executing ' + __addon__.getSetting('steam-path') + ' ' + __addon__.getSetting('steam-args') + ' steam://rungameid/' + id)
 
     # https://developer.valvesoftware.com/wiki/Steam_browser_protocol
-    subprocess.call([__addon__.getSetting('steam-path'), 'steam://rungameid/' + id])
+    subprocess.call([__addon__.getSetting('steam-path')] + userArgs + ['steam://rungameid/' + id])
 
 def main():
 
