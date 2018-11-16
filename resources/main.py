@@ -21,12 +21,43 @@ def log(msg, level=xbmc.LOGDEBUG):
 
         xbmc.log('[%s] %s' % (__addon__.getAddonInfo('id'), msg), level=level)
 
+# https://github.com/lutris/lutris/blob/master/lutris/util/steam.py
+def vdf_parse(steam_config_file, config):
+    """Parse a Steam config file and return the contents as a dict."""
+    line = " "
+    while line:
+        try:
+            line = steam_config_file.readline()
+        except UnicodeDecodeError:
+            log("Error while reading Steam VDF file {}. Returning {}".format(steam_config_file, config), xbmc.LOGERROR)
+            return config
+        if not line or line.strip() == "}":
+            return config
+        while not line.strip().endswith("\""):
+            nextline = steam_config_file.readline()
+            if not nextline:
+                break
+            line = line[:-1] + nextline
+
+        line_elements = line.strip().split("\"")
+        if len(line_elements) == 3:
+            key = line_elements[1]
+            steam_config_file.readline()  # skip '{'
+            config[key] = vdf_parse(steam_config_file, {})
+        else:
+            try:
+                config[line_elements[1]] = line_elements[3]
+            except IndexError:
+                log('Malformed config file: {}'.format(line), xbmc.LOGERROR)
+    return config
+
 @plugin.route('/')
 def index():
 
     handle = int(sys.argv[1])
 
     xbmcplugin.addDirectoryItem(handle=handle, url=plugin.url_for(all), listitem=xbmcgui.ListItem('All games'), isFolder=True)
+    xbmcplugin.addDirectoryItem(handle=handle, url=plugin.url_for(installed), listitem=xbmcgui.ListItem('Installed games'), isFolder=True)
     xbmcplugin.addDirectoryItem(handle=handle, url=plugin.url_for(recent), listitem=xbmcgui.ListItem('Recently played games'), isFolder=True)
     xbmcplugin.endOfDirectory(handle, succeeded=True)
 
@@ -70,6 +101,65 @@ def all():
         item.setArt({ 'thumb': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/header.jpg', 'fanart': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/page_bg_generated_v6b.jpg' })
 
         if not xbmcplugin.addDirectoryItem(handle=handle, url=plugin.url_for(run, id=str(appid)), listitem=item, totalItems=totalItems): break
+
+    xbmcplugin.addSortMethod(handle, xbmcplugin.SORT_METHOD_LABEL)
+    xbmcplugin.endOfDirectory(handle, succeeded=True)
+
+@plugin.route('/installed')
+def installed():
+
+    if __addon__.getSetting('steam-id') == '' or __addon__.getSetting('steam-key') == '':
+
+        # ensure required data is available
+        return
+
+    if os.path.isdir(__addon__.getSetting('steam-path')) == False:
+
+        # ensure required data is available
+        notify = xbmcgui.Dialog()
+        notify.notification('Error', 'Unable to find your Steam path, please check your settings.', xbmcgui.NOTIFICATION_ERROR)
+
+        return
+
+    handle = int(sys.argv[1])
+
+    try:
+
+        # query the steam web api for a full list of steam applications/games that belong to the user
+        response = requests.get('https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=' + __addon__.getSetting('steam-key') + '&steamid=' + __addon__.getSetting('steam-id') + '&include_appinfo=1&format=json', timeout=10)
+        response.raise_for_status()
+
+    except requests.exceptions.RequestException as e:
+
+        # something went wrong, can't scan the steam library
+        notify = xbmcgui.Dialog()
+        notify.notification('Error', 'An unexpected error has occurred while contacting Steam. Please ensure your Steam credentials are correct and then try again. If this problem persists please contact support.', xbmcgui.NOTIFICATION_ERROR)
+
+        log(str(e), xbmc.LOGERROR)
+
+        return
+
+    with open(os.path.join(__addon__.getSetting('steam-path'), 'registry.vdf'), 'r') as file:
+        vdf = vdf_parse(file, {})
+        apps = vdf['Registry']['HKCU']['Software']['Valve']['Steam']['Apps']
+        apps = dict((k, v) for (k, v) in apps.iteritems() if v.get('installed', '0') == '1')
+
+    data = response.json()
+
+    for entry in data['response']['games']:
+
+        appid = entry['appid']
+        name = entry['name']
+
+        # filter out any applications not listed as installed
+        if str(appid) not in apps: continue
+
+        item = xbmcgui.ListItem(name)
+
+        item.addContextMenuItems([('Play', 'RunPlugin(plugin://plugin.program.steam.library/run/' + str(appid) + ')'), ('Install', 'RunPlugin(plugin://plugin.program.steam.library/install/' + str(appid) + ')')])
+        item.setArt({ 'thumb': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/header.jpg', 'fanart': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/page_bg_generated_v6b.jpg' })
+
+        if not xbmcplugin.addDirectoryItem(handle=handle, url=plugin.url_for(run, id=str(appid)), listitem=item): break
 
     xbmcplugin.addSortMethod(handle, xbmcplugin.SORT_METHOD_LABEL)
     xbmcplugin.endOfDirectory(handle, succeeded=True)
@@ -119,7 +209,7 @@ def recent():
 @plugin.route('/install/<id>')
 def install(id):
 
-    if os.path.isfile(__addon__.getSetting('steam-path')) == False:
+    if os.path.isfile(__addon__.getSetting('steam-exe')) == False:
 
         # ensure required data is available
         notify = xbmcgui.Dialog()
@@ -127,15 +217,15 @@ def install(id):
 
         return
 
-    log('executing ' + __addon__.getSetting('steam-path') + ' steam://install/' + id)
+    log('executing ' + __addon__.getSetting('steam-exe') + ' steam://install/' + id)
 
     # https://developer.valvesoftware.com/wiki/Steam_browser_protocol
-    subprocess.call([__addon__.getSetting('steam-path'), 'steam://install/' + id])
+    subprocess.call([__addon__.getSetting('steam-exe'), 'steam://install/' + id])
 
 @plugin.route('/run/<id>')
 def run(id):
 
-    if os.path.isfile(__addon__.getSetting('steam-path')) == False:
+    if os.path.isfile(__addon__.getSetting('steam-exe')) == False:
 
         # ensure required data is available
         notify = xbmcgui.Dialog()
@@ -145,28 +235,26 @@ def run(id):
 
     userArgs = shlex.split(__addon__.getSetting('steam-args'))
 
-    log('executing ' + __addon__.getSetting('steam-path') + ' ' + __addon__.getSetting('steam-args') + ' steam://rungameid/' + id)
+    log('executing ' + __addon__.getSetting('steam-exe') + ' ' + __addon__.getSetting('steam-args') + ' steam://rungameid/' + id)
 
     # https://developer.valvesoftware.com/wiki/Steam_browser_protocol
-    subprocess.call([__addon__.getSetting('steam-path')] + userArgs + ['steam://rungameid/' + id])
+    subprocess.call([__addon__.getSetting('steam-exe')] + userArgs + ['steam://rungameid/' + id])
 
 def main():
 
     log('steam-id = ' + __addon__.getSetting('steam-id'))
     log('steam-key = ' + __addon__.getSetting('steam-key'))
+    log('steam-exe = ' + __addon__.getSetting('steam-exe'))
     log('steam-path = ' + __addon__.getSetting('steam-path'))
 
-    # all settings are empty, assume this is the first run
-    # best guess at steam executable path
-    if __addon__.getSetting('steam-id') == '' and __addon__.getSetting('steam-key') == '' and __addon__.getSetting('steam-path') == '':
+    # backwards compatibility for versions prior to 0.6.0
+    if __addon__.getSetting('steam-id') != '' and __addon__.getSetting('steam-key') != '' and __addon__.getSetting('steam-path') != '' and __addon__.getSetting('steam-exe') == '':
+
+        __addon__.setSetting('steam-exe', __addon__.getSetting('steam-path'));
 
         if sys.platform == "linux" or sys.platform == "linux2":
 
-            __addon__.setSetting('steam-path', '/usr/bin/steam')
-
-        elif sys.platform == "darwin":
-
-            __addon__.setSetting('steam-path', os.path.expanduser('~/Library/Application Support/Steam/Steam.app/Contents/MacOS/steam_osx'))
+            __addon__.setSetting('steam-path', os.path.expanduser('~/.steam'));
 
         elif sys.platform == "win32":
 
@@ -175,6 +263,35 @@ def main():
         elif sys.platform == "win64":
 
             __addon__.setSetting('steam-path', os.path.expandvars('%ProgramFiles(x86)%\\Steam\\Steam.exe'))
+
+    # all settings are empty, assume this is the first run
+    # best guess at steam executable path
+    if __addon__.getSetting('steam-id') == '' and __addon__.getSetting('steam-key') == '' and __addon__.getSetting('steam-exe') == '':
+
+        if sys.platform == "linux" or sys.platform == "linux2":
+
+            __addon__.setSetting('steam-exe', '/usr/bin/steam')
+            __addon__.setSetting('steam-path', os.path.expanduser('~/.steam'));
+
+        elif sys.platform == "darwin":
+
+            __addon__.setSetting('steam-exe', os.path.expanduser('~/Library/Application Support/Steam/Steam.app/Contents/MacOS/steam_osx'))
+            # TODO: not a clue
+
+        elif sys.platform == "win32":
+
+            __addon__.setSetting('steam-exe', os.path.expandvars('%ProgramFiles%\\Steam\\Steam.exe'))
+            __addon__.setSetting('steam-path', os.path.expandvars('%ProgramFiles%\\Steam\\Steam.exe'))
+
+        elif sys.platform == "win64":
+
+            __addon__.setSetting('steam-exe', os.path.expandvars('%ProgramFiles(x86)%\\Steam\\Steam.exe'))
+            __addon__.setSetting('steam-path', os.path.expandvars('%ProgramFiles(x86)%\\Steam\\Steam.exe'))
+
+    if __addon__.getSetting('version') == '':
+
+        # first time run, store version
+        __addon__.setSetting('version', '0.6.0');
 
     # prompt the user to configure the plugin with their steam details
     if __addon__.getSetting('steam-id') == '' or __addon__.getSetting('steam-key') == '':

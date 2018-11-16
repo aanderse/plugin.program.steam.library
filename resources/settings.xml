@@ -3,6 +3,8 @@
     <setting id="debug" type="bool" label="Enable debugging mode" default="false"/>
     <setting id="steam-id" type="text" label="Your Steam user id"/>
     <setting id="steam-key" type="text" label="Your Steam web API key"/>
-    <setting id="steam-path" type="executable" label="Path to your Steam executable"/>
+    <setting id="steam-exe" type="executable" label="Your Steam executable file (Steam.exe)"/>
+    <setting id="steam-path" type="folder" label="Your Steam folder (contains registry.vdf)"/>
     <setting id="steam-args" type="text" label="Arguments to pass to your Steam executable"/>
+    <setting id="version" type="text" label="Internal version number, do not modify" visible="false"/>
 </settings>
