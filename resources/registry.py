@@ -2,9 +2,12 @@
 get registry values for steam games
 '''
 
-import os, _winreg
+import os
 import xbmc
 from config import log
+
+if os.name == 'nt':
+    import _winreg
 
 # https://github.com/lutris/lutris/blob/master/lutris/util/steam.py
 def vdf_parse(steam_config_file, config):
@@ -65,7 +68,7 @@ def get_registry_values(registry_path):
                 else:
                     app_dict[app_id] = installed
                     i += 1
-        
+
         except WindowsError:
             pass
     else:

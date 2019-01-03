@@ -15,10 +15,6 @@ from config import *
 
 __addon__ = xbmcaddon.Addon()
 
-if os.name == 'nt':
-    import _winreg
-
-
 plugin = routing.Plugin()
 
 @plugin.route('/')
