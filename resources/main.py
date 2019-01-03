@@ -1,4 +1,3 @@
-
 import os
 import requests
 import routing
@@ -10,46 +9,17 @@ import xbmc
 import xbmcaddon
 import xbmcgui
 import xbmcplugin
+import registry
+
+from config import *
 
 __addon__ = xbmcaddon.Addon()
 
+if os.name == 'nt':
+    import _winreg
+
+
 plugin = routing.Plugin()
-
-def log(msg, level=xbmc.LOGDEBUG):
-
-    if __addon__.getSetting('debug') == 'true' or level != xbmc.LOGDEBUG:
-
-        xbmc.log('[%s] %s' % (__addon__.getAddonInfo('id'), msg), level=level)
-
-# https://github.com/lutris/lutris/blob/master/lutris/util/steam.py
-def vdf_parse(steam_config_file, config):
-    """Parse a Steam config file and return the contents as a dict."""
-    line = " "
-    while line:
-        try:
-            line = steam_config_file.readline()
-        except UnicodeDecodeError:
-            log("Error while reading Steam VDF file {}. Returning {}".format(steam_config_file, config), xbmc.LOGERROR)
-            return config
-        if not line or line.strip() == "}":
-            return config
-        while not line.strip().endswith("\""):
-            nextline = steam_config_file.readline()
-            if not nextline:
-                break
-            line = line[:-1] + nextline
-
-        line_elements = line.strip().split("\"")
-        if len(line_elements) == 3:
-            key = line_elements[1]
-            steam_config_file.readline()  # skip '{'
-            config[key] = vdf_parse(steam_config_file, {})
-        else:
-            try:
-                config[line_elements[1]] = line_elements[3]
-            except IndexError:
-                log('Malformed config file: {}'.format(line), xbmc.LOGERROR)
-    return config
 
 @plugin.route('/')
 def index():
@@ -139,11 +109,7 @@ def installed():
 
         return
 
-    with open(os.path.join(__addon__.getSetting('steam-path'), 'registry.vdf'), 'r') as file:
-        vdf = vdf_parse(file, {})
-        apps = vdf['Registry']['HKCU']['Software']['Valve']['Steam']['Apps']
-        apps = dict((k, v) for (k, v) in apps.iteritems() if v.get('installed', '0') == '1')
-
+    apps = registry.get_registry_values(os.path.join(__addon__.getSetting('steam-path'), 'registry.vdf'))
     data = response.json()
 
     for entry in data['response']['games']:
