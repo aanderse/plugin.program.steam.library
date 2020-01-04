@@ -75,6 +75,9 @@ def get_registry_values(registry_path):
         with open(registry_path, 'r') as file:
             vdf = vdf_parse(file, {})
             apps = vdf['Registry']['HKCU']['Software']['Valve']['Steam']['Apps']
-            app_dict = dict((k, v) for (k, v) in apps.iteritems() if v.get('installed', '0') == '1')
+
+            # apparently case of 'installed' differs depending on ... ?
+            # i'm sure if i were a python programmer this would look nicer
+            app_dict = dict((k, v) for (k, v) in apps.iteritems() if ({ k.lower():v for k,v in v.items() }.get('installed', '0') == '1'))
 
     return app_dict
