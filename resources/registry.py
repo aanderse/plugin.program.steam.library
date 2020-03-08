@@ -62,12 +62,9 @@ def get_registry_values(registry_path):
                 app_id = _winreg.EnumKey(apps, i)
                 #print(app_id)
                 installed = is_installed(app_id)
-                if installed is None:
-                    i += 1
-                    continue
-                else:
+                i += 1
+                if installed:
                     app_dict[app_id] = installed
-                    i += 1
 
         except WindowsError:
             pass
