@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.program.steam.library" name="Steam Library" version="0.6.1" provider-name="aanderse">
+<addon id="plugin.program.steam.library" name="Steam Library" version="0.6.3" provider-name="aanderse">
     <requires>
         <import addon="xbmc.python" version="2.19.0" />
         <import addon="script.module.requests" version="2.18.4" />
@@ -35,6 +35,9 @@
             - added list for installed games
             v0.6.1 (2019-01-03)
             - added windows support for list of installed games courtesy of @jared-skinner
+            v0.6.3 (2020-03-08)
+            - various bug fixes thanks to @Aminel
+            - add plugin to games provider list
         </news>
         <assets>
             <icon>icon.png</icon>
