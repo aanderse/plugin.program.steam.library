@@ -16,16 +16,15 @@ from config import *
 __addon__ = xbmcaddon.Addon()
 
 plugin = routing.Plugin()
+# Note : the Kodi routing plugin also obtains and casts the handle. We can use it through plugin.handle instead of redefining it.
 
 @plugin.route('/')
 def index():
 
-    handle = int(sys.argv[1])
-
-    xbmcplugin.addDirectoryItem(handle=handle, url=plugin.url_for(all), listitem=xbmcgui.ListItem('All games'), isFolder=True)
-    xbmcplugin.addDirectoryItem(handle=handle, url=plugin.url_for(installed), listitem=xbmcgui.ListItem('Installed games'), isFolder=True)
-    xbmcplugin.addDirectoryItem(handle=handle, url=plugin.url_for(recent), listitem=xbmcgui.ListItem('Recently played games'), isFolder=True)
-    xbmcplugin.endOfDirectory(handle, succeeded=True)
+    xbmcplugin.addDirectoryItem(handle=plugin.handle, url=plugin.url_for(all), listitem=xbmcgui.ListItem('All games'), isFolder=True)
+    xbmcplugin.addDirectoryItem(handle=plugin.handle, url=plugin.url_for(installed), listitem=xbmcgui.ListItem('Installed games'), isFolder=True)
+    xbmcplugin.addDirectoryItem(handle=plugin.handle, url=plugin.url_for(recent), listitem=xbmcgui.ListItem('Recently played games'), isFolder=True)
+    xbmcplugin.endOfDirectory(plugin.handle, succeeded=True)
 
 @plugin.route('/all')
 def all():
