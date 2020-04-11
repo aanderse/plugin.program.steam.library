@@ -29,9 +29,7 @@ def index():
 @plugin.route('/all')
 def all():
 
-    if __addon__.getSetting('steam-id') == '' or __addon__.getSetting('steam-key') == '':
-
-        # ensure required data is available
+    if not all_required_credentials_available():
         return
 
     handle = int(sys.argv[1])
@@ -73,9 +71,7 @@ def all():
 @plugin.route('/installed')
 def installed():
 
-    if __addon__.getSetting('steam-id') == '' or __addon__.getSetting('steam-key') == '':
-
-        # ensure required data is available
+    if not all_required_credentials_available():
         return
 
     if os.path.isdir(__addon__.getSetting('steam-path')) == False:
@@ -128,9 +124,7 @@ def installed():
 @plugin.route('/recent')
 def recent():
 
-    if __addon__.getSetting('steam-id') == '' or __addon__.getSetting('steam-key') == '':
-
-        # ensure required data is available
+    if not all_required_credentials_available():
         return
 
     handle = int(sys.argv[1])
@@ -255,8 +249,7 @@ def main():
         __addon__.setSetting('version', '0.6.0');
 
     # prompt the user to configure the plugin with their steam details
-    if __addon__.getSetting('steam-id') == '' or __addon__.getSetting('steam-key') == '':
-
+    if not all_required_credentials_available():
         __addon__.openSettings()
 
     plugin.run()
