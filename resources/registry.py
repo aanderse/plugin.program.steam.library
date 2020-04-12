@@ -9,6 +9,7 @@ from util import log
 if os.name == 'nt':
     import _winreg
 
+
 # https://github.com/lutris/lutris/blob/master/lutris/util/steam.py
 def vdf_parse(steam_config_file, config):
     """Parse a Steam config file and return the contents as a dict."""
@@ -39,6 +40,7 @@ def vdf_parse(steam_config_file, config):
                 log('Malformed config file: {}'.format(line), xbmc.LOGERROR)
     return config
 
+
 def is_installed(app_id):
     app = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER, "Software\\Valve\\Steam\\Apps\\" + app_id)
     try:
@@ -51,6 +53,7 @@ def is_installed(app_id):
     except WindowsError:
         return None
 
+
 def get_registry_values(registry_path):
     app_dict = {}
 
@@ -60,7 +63,7 @@ def get_registry_values(registry_path):
             i = 0
             while True:
                 app_id = _winreg.EnumKey(apps, i)
-                #print(app_id)
+                # print(app_id)
                 installed = is_installed(app_id)
                 i += 1
                 if installed:
@@ -75,6 +78,6 @@ def get_registry_values(registry_path):
 
             # apparently case of 'installed' differs depending on ... ?
             # i'm sure if i were a python programmer this would look nicer
-            app_dict = dict((k, v) for (k, v) in apps.iteritems() if ({ k.lower():v for k,v in v.items() }.get('installed', '0') == '1'))
+            app_dict = dict((k, v) for (k, v) in apps.iteritems() if ({k.lower(): v for k, v in v.items()}.get('installed', '0') == '1'))
 
     return app_dict
