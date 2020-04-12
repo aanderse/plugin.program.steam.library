@@ -43,11 +43,8 @@ def all():
     except requests.exceptions.RequestException as e:
 
         # something went wrong, can't scan the steam library
-        notify = xbmcgui.Dialog()
-        notify.notification('Error', 'An unexpected error has occurred while contacting Steam. Please ensure your Steam credentials are correct and then try again. If this problem persists please contact support.', xbmcgui.NOTIFICATION_ERROR)
-
-        log(str(e), xbmc.LOGERROR)
-
+        show_error(e, 'An unexpected error has occurred while contacting Steam. Please ensure your Steam credentials are correct and then try again. '
+                      'If this problem persists please contact support.')
         return
 
     data = response.json()
@@ -77,9 +74,7 @@ def installed():
     if os.path.isdir(__addon__.getSetting('steam-path')) == False:
 
         # ensure required data is available
-        notify = xbmcgui.Dialog()
-        notify.notification('Error', 'Unable to find your Steam path, please check your settings.', xbmcgui.NOTIFICATION_ERROR)
-
+        show_error(NameError("steam-path not found"), 'Unable to find your Steam path, please check your settings.')
         return
 
     handle = int(sys.argv[1])
@@ -93,11 +88,8 @@ def installed():
     except requests.exceptions.RequestException as e:
 
         # something went wrong, can't scan the steam library
-        notify = xbmcgui.Dialog()
-        notify.notification('Error', 'An unexpected error has occurred while contacting Steam. Please ensure your Steam credentials are correct and then try again. If this problem persists please contact support.', xbmcgui.NOTIFICATION_ERROR)
-
-        log(str(e), xbmc.LOGERROR)
-
+        show_error(e, 'An unexpected error has occurred while contacting Steam. Please ensure your Steam credentials are correct and then try again. '
+                      'If this problem persists please contact support.')
         return
 
     apps = registry.get_registry_values(os.path.join(__addon__.getSetting('steam-path'), 'registry.vdf'))
@@ -138,11 +130,8 @@ def recent():
     except requests.exceptions.RequestException as e:
 
         # something went wrong, can't scan the steam library
-        notify = xbmcgui.Dialog()
-        notify.notification('Error', 'An unexpected error has occurred while contacting Steam. Please ensure your Steam credentials are correct and then try again. If this problem persists please contact support.', xbmcgui.NOTIFICATION_ERROR)
-
-        log(str(e), xbmc.LOGERROR)
-
+        show_error(e, 'An unexpected error has occurred while contacting Steam. Please ensure your Steam credentials are correct and then try again. '
+                      'If this problem persists please contact support.')
         return
 
     data = response.json()
@@ -167,9 +156,7 @@ def install(id):
     if os.path.isfile(__addon__.getSetting('steam-exe')) == False:
 
         # ensure required data is available
-        notify = xbmcgui.Dialog()
-        notify.notification('Error', 'Unable to find your Steam executable, please check your settings.', xbmcgui.NOTIFICATION_ERROR)
-
+        show_error(NameError('steam-exe not found'), 'Unable to find your Steam executable, please check your settings.')
         return
 
     log('executing ' + __addon__.getSetting('steam-exe') + ' steam://install/' + id)
@@ -183,9 +170,7 @@ def run(id):
     if os.path.isfile(__addon__.getSetting('steam-exe')) == False:
 
         # ensure required data is available
-        notify = xbmcgui.Dialog()
-        notify.notification('Error', 'Unable to find your Steam executable, please check your settings.', xbmcgui.NOTIFICATION_ERROR)
-
+        show_error(NameError('steam-exe not found'), 'Unable to find your Steam executable, please check your settings.')
         return
 
     userArgs = shlex.split(__addon__.getSetting('steam-args'))
