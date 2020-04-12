@@ -122,7 +122,7 @@ def create_directory_items(app_entries):
     """
     Creates a list item for each game/app entry provided
 
-    :param app_entries: array of game entries, containing at least keys : appid, name, img_icon_url, img_logo_url, playtime_forever
+    :param app_entries: array of game entries, with each entry containing at least keys : appid, name, img_icon_url, img_logo_url, playtime_forever
     :returns: an array of list items of the game entries, formatted like so : [(url,listItem,bool),..]
     """
     directory_items = []
@@ -136,12 +136,23 @@ def create_directory_items(app_entries):
         item.addContextMenuItems([('Play', 'RunPlugin(' + run_url + ')'),
                                   ('Install', 'RunPlugin(' + plugin.url_for(install, appid=appid) + ')')])
 
-        item.setArt({'thumb': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/header.jpg',
-                     'fanart': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/page_bg_generated_v6b.jpg'})
+        art_dictionary = create_arts_dictionary(app_entry)
+        item.setArt(art_dictionary)
 
         directory_items.append((run_url, item, False))
 
     return directory_items
+
+
+def create_arts_dictionary(app_entry):
+    """
+    Creates a dictionary of arts keys and their associated links, for a given app entry.
+    :param app_entry: dictionary of app informations, containing at least the keys : appid, img_icon_url, img_logo_url
+    :return: dictionary of arts for the app.
+    """
+    art_dictionary = {'thumb': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(app_entry['appid']) + '/header.jpg',
+                      'fanart': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(app_entry['appid']) + '/page_bg_generated_v6b.jpg'}
+    return art_dictionary
 
 
 def main():
