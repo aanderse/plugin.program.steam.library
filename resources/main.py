@@ -121,8 +121,8 @@ def recent():
     xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_UNSORTED)
     xbmcplugin.endOfDirectory(plugin.handle, succeeded=True)
 
-@plugin.route('/install/<id>')
-def install(id):
+@plugin.route('/install/<appid>')
+def install(appid):
 
     if os.path.isfile(__addon__.getSetting('steam-exe')) == False:
 
@@ -130,10 +130,10 @@ def install(id):
         show_error(NameError('steam-exe not found'), 'Unable to find your Steam executable, please check your settings.')
         return
 
-    steam.install(__addon__.getSetting('steam-exe'), id)
+    steam.install(__addon__.getSetting('steam-exe'), appid)
 
-@plugin.route('/run/<id>')
-def run(id):
+@plugin.route('/run/<appid>')
+def run(appid):
 
     if os.path.isfile(__addon__.getSetting('steam-exe')) == False:
 
@@ -141,7 +141,7 @@ def run(id):
         show_error(NameError('steam-exe not found'), 'Unable to find your Steam executable, please check your settings.')
         return
 
-    steam.run(__addon__.getSetting('steam-exe'), __addon__.getSetting('steam-args'), id)
+    steam.run(__addon__.getSetting('steam-exe'), __addon__.getSetting('steam-args'), appid)
 
 
 def create_directory_items(app_entries):
@@ -156,12 +156,12 @@ def create_directory_items(app_entries):
         appid = str(app_entry['appid'])
         name = app_entry['name']
 
-        run_url = plugin.url_for(run, id=appid)#TODO change id parameter to appid in the routes
+        run_url = plugin.url_for(run, appid=appid)
         item = xbmcgui.ListItem(name)
 
         item.addContextMenuItems([('Play',
                                    'RunPlugin(' + run_url + ')'),
-                                  ('Install', 'RunPlugin(' + plugin.url_for(install, id=appid) + ')')])
+                                  ('Install', 'RunPlugin(' + plugin.url_for(install, appid=appid) + ')')])
 
         item.setArt({'thumb': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/header.jpg',
                      'fanart': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/page_bg_generated_v6b.jpg'})
