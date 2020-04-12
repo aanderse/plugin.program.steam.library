@@ -1,13 +1,6 @@
 import os
-import requests
 import routing
-import shlex
-import subprocess
 import sys
-import time
-import xbmc
-import xbmcaddon
-import xbmcgui
 import xbmcplugin
 import registry
 
