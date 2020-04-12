@@ -34,10 +34,7 @@ def all():
         return
 
     try:
-
-        # query the steam web api for a full list of steam applications/games that belong to the user
-        response = requests.get('https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=' + __addon__.getSetting('steam-key') + '&steamid=' + __addon__.getSetting('steam-id') + '&include_appinfo=1&format=json', timeout=10)
-        response.raise_for_status()
+        steam_games_details = steam.get_user_games(__addon__.getSetting('steam-key'), __addon__.getSetting('steam-id'))
 
     except IOError as e:
         # something went wrong, can't scan the steam library
@@ -45,10 +42,7 @@ def all():
                       'If this problem persists please contact support.')
         return
 
-    data = response.json()
-    totalItems = data['response']['game_count']
-
-    directory_items = create_directory_items(data['response']['games'])
+    directory_items = create_directory_items(steam_games_details)
     xbmcplugin.addDirectoryItems(plugin.handle, directory_items)
 
     xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_LABEL)
@@ -67,10 +61,7 @@ def installed():
         return
 
     try:
-
-        # query the steam web api for a full list of steam applications/games that belong to the user
-        response = requests.get('https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=' + __addon__.getSetting('steam-key') + '&steamid=' + __addon__.getSetting('steam-id') + '&include_appinfo=1&format=json', timeout=10)
-        response.raise_for_status()
+        steam_games_details = steam.get_user_games(__addon__.getSetting('steam-key'), __addon__.getSetting('steam-id'))
 
     except IOError as e:
         # something went wrong, can't scan the steam library
@@ -83,10 +74,9 @@ def installed():
     installed_appids_dict = registry.get_registry_values(os.path.join(__addon__.getSetting('steam-path'), 'registry.vdf'))
     # Get an Array of dictionary keys, ie of the installed games appids. TODO return an array directly from the function above.
     installed_appids = installed_appids_dict.keys()
-    data = response.json()
 
     # filter out any applications not listed as installed
-    steam_installed_games = filter(lambda app_entry: str(app_entry['appid']) in installed_appids, data['response']['games'])
+    steam_installed_games = filter(lambda app_entry: str(app_entry['appid']) in installed_appids, steam_games_details)
 
     directory_items = create_directory_items(steam_installed_games)
     xbmcplugin.addDirectoryItems(plugin.handle, directory_items)
@@ -101,10 +91,7 @@ def recent():
         return
 
     try:
-
-        # query the steam web api for a full list of steam applications/games that belong to the user
-        response = requests.get('https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v0001/?key=' + __addon__.getSetting('steam-key') + '&steamid=' + __addon__.getSetting('steam-id') + '&include_appinfo=1&format=json', timeout=10)
-        response.raise_for_status()
+        steam_games_details = steam.get_user_games(__addon__.getSetting('steam-key'), __addon__.getSetting('steam-id'), recent_only=True)
 
     except IOError as e:
         # something went wrong, can't scan the steam library
@@ -112,10 +99,7 @@ def recent():
                       'If this problem persists please contact support.')
         return
 
-    data = response.json()
-    totalItems = data['response']['total_count']
-
-    directory_items = create_directory_items(data['response']['games'])
+    directory_items = create_directory_items(steam_games_details)
     xbmcplugin.addDirectoryItems(plugin.handle, directory_items)
 
     xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_UNSORTED)
