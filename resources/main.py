@@ -11,6 +11,7 @@ import xbmcgui
 import xbmcplugin
 import registry
 
+import steam
 from util import *
 
 __addon__ = xbmcaddon.Addon()
@@ -129,10 +130,7 @@ def install(id):
         show_error(NameError('steam-exe not found'), 'Unable to find your Steam executable, please check your settings.')
         return
 
-    log('executing ' + __addon__.getSetting('steam-exe') + ' steam://install/' + id)
-
-    # https://developer.valvesoftware.com/wiki/Steam_browser_protocol
-    subprocess.call([__addon__.getSetting('steam-exe'), 'steam://install/' + id])
+    steam.install(__addon__.getSetting('steam-exe'), id)
 
 @plugin.route('/run/<id>')
 def run(id):
@@ -143,12 +141,7 @@ def run(id):
         show_error(NameError('steam-exe not found'), 'Unable to find your Steam executable, please check your settings.')
         return
 
-    userArgs = shlex.split(__addon__.getSetting('steam-args'))
-
-    log('executing ' + __addon__.getSetting('steam-exe') + ' ' + __addon__.getSetting('steam-args') + ' steam://rungameid/' + id)
-
-    # https://developer.valvesoftware.com/wiki/Steam_browser_protocol
-    subprocess.call([__addon__.getSetting('steam-exe')] + userArgs + ['steam://rungameid/' + id])
+    steam.run(__addon__.getSetting('steam-exe'), __addon__.getSetting('steam-args'), id)
 
 
 def create_directory_items(app_entries):
