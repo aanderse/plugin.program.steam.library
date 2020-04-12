@@ -61,11 +61,7 @@ def installed_games():
                       'If this problem persists please contact support.')
         return
 
-    # TODO : Refactor and/or rename get_registry_values, and perhaps return an array of appids instead of a dictionary.
-    #  currently returns a dictionary of string appid as keys, and only values '1'. Uninstalled games in the registry are actually not returned by this function
-    installed_appids_dict = registry.get_registry_values(os.path.join(__addon__.getSetting('steam-path'), 'registry.vdf'))
-    # Get an Array of dictionary keys, ie of the installed games appids. TODO return an array directly from the function above.
-    installed_appids = installed_appids_dict.keys()
+    installed_appids = registry.get_installed_steam_apps(os.path.join(__addon__.getSetting('steam-path'), 'registry.vdf'))
 
     # filter out any applications not listed as installed
     steam_installed_games = filter(lambda app_entry: str(app_entry['appid']) in installed_appids, steam_games_details)
