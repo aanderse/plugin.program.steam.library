@@ -40,8 +40,7 @@ def all():
         response = requests.get('https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=' + __addon__.getSetting('steam-key') + '&steamid=' + __addon__.getSetting('steam-id') + '&include_appinfo=1&format=json', timeout=10)
         response.raise_for_status()
 
-    except requests.exceptions.RequestException as e:
-
+    except IOError as e:
         # something went wrong, can't scan the steam library
         show_error(e, 'An unexpected error has occurred while contacting Steam. Please ensure your Steam credentials are correct and then try again. '
                       'If this problem persists please contact support.')
@@ -85,8 +84,7 @@ def installed():
         response = requests.get('https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=' + __addon__.getSetting('steam-key') + '&steamid=' + __addon__.getSetting('steam-id') + '&include_appinfo=1&format=json', timeout=10)
         response.raise_for_status()
 
-    except requests.exceptions.RequestException as e:
-
+    except IOError as e:
         # something went wrong, can't scan the steam library
         show_error(e, 'An unexpected error has occurred while contacting Steam. Please ensure your Steam credentials are correct and then try again. '
                       'If this problem persists please contact support.')
@@ -127,8 +125,7 @@ def recent():
         response = requests.get('https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v0001/?key=' + __addon__.getSetting('steam-key') + '&steamid=' + __addon__.getSetting('steam-id') + '&include_appinfo=1&format=json', timeout=10)
         response.raise_for_status()
 
-    except requests.exceptions.RequestException as e:
-
+    except IOError as e:
         # something went wrong, can't scan the steam library
         show_error(e, 'An unexpected error has occurred while contacting Steam. Please ensure your Steam credentials are correct and then try again. '
                       'If this problem persists please contact support.')
