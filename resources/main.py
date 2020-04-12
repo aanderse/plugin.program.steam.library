@@ -32,8 +32,6 @@ def all():
     if not all_required_credentials_available():
         return
 
-    handle = int(sys.argv[1])
-
     try:
 
         # query the steam web api for a full list of steam applications/games that belong to the user
@@ -49,20 +47,11 @@ def all():
     data = response.json()
     totalItems = data['response']['game_count']
 
-    for entry in data['response']['games']:
+    directory_items = create_directory_items(data['response']['games'])
+    xbmcplugin.addDirectoryItems(plugin.handle, directory_items)
 
-        appid = entry['appid']
-        name = entry['name']
-
-        item = xbmcgui.ListItem(name)
-
-        item.addContextMenuItems([('Play', 'RunPlugin(plugin://plugin.program.steam.library/run/' + str(appid) + ')'), ('Install', 'RunPlugin(plugin://plugin.program.steam.library/install/' + str(appid) + ')')])
-        item.setArt({ 'thumb': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/header.jpg', 'fanart': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/page_bg_generated_v6b.jpg' })
-
-        if not xbmcplugin.addDirectoryItem(handle=handle, url=plugin.url_for(run, id=str(appid)), listitem=item, totalItems=totalItems): break
-
-    xbmcplugin.addSortMethod(handle, xbmcplugin.SORT_METHOD_LABEL)
-    xbmcplugin.endOfDirectory(handle, succeeded=True)
+    xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_LABEL)
+    xbmcplugin.endOfDirectory(plugin.handle, succeeded=True)
 
 @plugin.route('/installed')
 def installed():
@@ -76,8 +65,6 @@ def installed():
         show_error(NameError("steam-path not found"), 'Unable to find your Steam path, please check your settings.')
         return
 
-    handle = int(sys.argv[1])
-
     try:
 
         # query the steam web api for a full list of steam applications/games that belong to the user
@@ -90,34 +77,27 @@ def installed():
                       'If this problem persists please contact support.')
         return
 
-    apps = registry.get_registry_values(os.path.join(__addon__.getSetting('steam-path'), 'registry.vdf'))
+    # TODO : Refactor and/or rename get_registry_values, and perhaps return an array of appids instead of a dictionary.
+    #  currently returns a dictionary of string appid as keys, and only values '1'. Uninstalled games in the registry are actually not returned by this function.
+    installed_appids_dict = registry.get_registry_values(os.path.join(__addon__.getSetting('steam-path'), 'registry.vdf'))
+    # Get an Array of dictionary keys, ie of the installed games appids. TODO return an array directly from the function above.
+    installed_appids = installed_appids_dict.keys()
     data = response.json()
 
-    for entry in data['response']['games']:
+    # filter out any applications not listed as installed
+    steam_installed_games = filter(lambda app_entry: str(app_entry['appid']) in installed_appids, data['response']['games'])
 
-        appid = entry['appid']
-        name = entry['name']
+    directory_items = create_directory_items(steam_installed_games)
+    xbmcplugin.addDirectoryItems(plugin.handle, directory_items)
 
-        # filter out any applications not listed as installed
-        if str(appid) not in apps: continue
-
-        item = xbmcgui.ListItem(name)
-
-        item.addContextMenuItems([('Play', 'RunPlugin(plugin://plugin.program.steam.library/run/' + str(appid) + ')'), ('Install', 'RunPlugin(plugin://plugin.program.steam.library/install/' + str(appid) + ')')])
-        item.setArt({ 'thumb': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/header.jpg', 'fanart': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/page_bg_generated_v6b.jpg' })
-
-        if not xbmcplugin.addDirectoryItem(handle=handle, url=plugin.url_for(run, id=str(appid)), listitem=item): break
-
-    xbmcplugin.addSortMethod(handle, xbmcplugin.SORT_METHOD_LABEL)
-    xbmcplugin.endOfDirectory(handle, succeeded=True)
+    xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_LABEL)
+    xbmcplugin.endOfDirectory(plugin.handle, succeeded=True)
 
 @plugin.route('/recent')
 def recent():
 
     if not all_required_credentials_available():
         return
-
-    handle = int(sys.argv[1])
 
     try:
 
@@ -134,18 +114,11 @@ def recent():
     data = response.json()
     totalItems = data['response']['total_count']
 
-    for entry in data['response']['games']:
+    directory_items = create_directory_items(data['response']['games'])
+    xbmcplugin.addDirectoryItems(plugin.handle, directory_items)
 
-        appid = entry['appid']
-        name = entry['name']
-
-        item = xbmcgui.ListItem(name)
-        item.setArt({ 'thumb': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/header.jpg', 'fanart': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/page_bg_generated_v6b.jpg' })
-
-        if not xbmcplugin.addDirectoryItem(handle=handle, url=plugin.url_for(run, id=str(appid)), listitem=item, totalItems=totalItems): break
-
-    xbmcplugin.addSortMethod(handle, xbmcplugin.SORT_METHOD_UNSORTED)
-    xbmcplugin.endOfDirectory(handle, succeeded=True)
+    xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_UNSORTED)
+    xbmcplugin.endOfDirectory(plugin.handle, succeeded=True)
 
 @plugin.route('/install/<id>')
 def install(id):
@@ -176,6 +149,34 @@ def run(id):
 
     # https://developer.valvesoftware.com/wiki/Steam_browser_protocol
     subprocess.call([__addon__.getSetting('steam-exe')] + userArgs + ['steam://rungameid/' + id])
+
+
+def create_directory_items(app_entries):
+    """
+    Creates a list item for each game/app entry provided
+
+    :param app_entries: array of game entries, containing at least keys : appid, name, img_icon_url, img_logo_url, playtime_forever
+    :returns: an array of list items of the game entries, formatted like so : [(url,listItem,bool),..]
+    """
+    directory_items = []
+    for app_entry in app_entries:
+        appid = str(app_entry['appid'])
+        name = app_entry['name']
+
+        run_url = plugin.url_for(run, id=appid)#TODO change id parameter to appid in the routes
+        item = xbmcgui.ListItem(name)
+
+        item.addContextMenuItems([('Play',
+                                   'RunPlugin(' + run_url + ')'),
+                                  ('Install', 'RunPlugin(' + plugin.url_for(install, id=appid) + ')')])
+
+        item.setArt({'thumb': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/header.jpg',
+                     'fanart': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/page_bg_generated_v6b.jpg'})
+
+        directory_items.append((run_url, item, False))
+
+    return directory_items
+
 
 def main():
 
