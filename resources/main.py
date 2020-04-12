@@ -11,7 +11,7 @@ import xbmcgui
 import xbmcplugin
 import registry
 
-from config import *
+from util import *
 
 __addon__ = xbmcaddon.Addon()
 
