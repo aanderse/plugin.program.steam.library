@@ -29,7 +29,7 @@ def run(steam_exe_path, steam_launch_args, appid):
     log('executing ' + steam_exe_path + ' ' + steam_launch_args + ' steam://rungameid/' + appid)
 
     # https://developer.valvesoftware.com/wiki/Steam_browser_protocol
-    subprocess.call([steam_exe_path, user_args, 'steam://rungameid/' + appid])
+    subprocess.call([steam_exe_path] + user_args + ['steam://rungameid/' + appid]) #Concatenate the arrays into one
 
 
 def get_user_games(steam_api_key, steam_user_id, recent_only=False):
