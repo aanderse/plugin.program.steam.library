@@ -1,222 +1,171 @@
 import os
-import requests
 import routing
-import shlex
-import subprocess
 import sys
-import time
-import xbmc
-import xbmcaddon
-import xbmcgui
 import xbmcplugin
 import registry
-
-from config import *
+import steam
+from util import *
 
 __addon__ = xbmcaddon.Addon()
 
 plugin = routing.Plugin()
 
+
+# Note : the Kodi routing plugin also obtains and casts the handle. We can use it through plugin.handle instead of redefining it.
+
 @plugin.route('/')
 def index():
+    xbmcplugin.addDirectoryItem(handle=plugin.handle, url=plugin.url_for(all_games), listitem=xbmcgui.ListItem('All games'), isFolder=True)
+    xbmcplugin.addDirectoryItem(handle=plugin.handle, url=plugin.url_for(installed_games), listitem=xbmcgui.ListItem('Installed games'), isFolder=True)
+    xbmcplugin.addDirectoryItem(handle=plugin.handle, url=plugin.url_for(recent_games), listitem=xbmcgui.ListItem('Recently played games'), isFolder=True)
+    xbmcplugin.endOfDirectory(plugin.handle, succeeded=True)
 
-    handle = int(sys.argv[1])
-
-    xbmcplugin.addDirectoryItem(handle=handle, url=plugin.url_for(all), listitem=xbmcgui.ListItem('All games'), isFolder=True)
-    xbmcplugin.addDirectoryItem(handle=handle, url=plugin.url_for(installed), listitem=xbmcgui.ListItem('Installed games'), isFolder=True)
-    xbmcplugin.addDirectoryItem(handle=handle, url=plugin.url_for(recent), listitem=xbmcgui.ListItem('Recently played games'), isFolder=True)
-    xbmcplugin.endOfDirectory(handle, succeeded=True)
 
 @plugin.route('/all')
-def all():
-
-    if __addon__.getSetting('steam-id') == '' or __addon__.getSetting('steam-key') == '':
-
-        # ensure required data is available
+def all_games():
+    if not all_required_credentials_available():
         return
-
-    handle = int(sys.argv[1])
 
     try:
+        steam_games_details = steam.get_user_games(__addon__.getSetting('steam-key'), __addon__.getSetting('steam-id'))
 
-        # query the steam web api for a full list of steam applications/games that belong to the user
-        response = requests.get('https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=' + __addon__.getSetting('steam-key') + '&steamid=' + __addon__.getSetting('steam-id') + '&include_appinfo=1&format=json', timeout=10)
-        response.raise_for_status()
-
-    except requests.exceptions.RequestException as e:
-
+    except IOError as e:
         # something went wrong, can't scan the steam library
-        notify = xbmcgui.Dialog()
-        notify.notification('Error', 'An unexpected error has occurred while contacting Steam. Please ensure your Steam credentials are correct and then try again. If this problem persists please contact support.', xbmcgui.NOTIFICATION_ERROR)
-
-        log(str(e), xbmc.LOGERROR)
-
+        show_error(e, 'An unexpected error has occurred while contacting Steam. Please ensure your Steam credentials are correct and then try again. '
+                      'If this problem persists please contact support.')
         return
 
-    data = response.json()
-    totalItems = data['response']['game_count']
+    directory_items = create_directory_items(steam_games_details)
+    xbmcplugin.addDirectoryItems(plugin.handle, directory_items)
 
-    for entry in data['response']['games']:
+    xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_LABEL)
+    xbmcplugin.endOfDirectory(plugin.handle, succeeded=True)
 
-        appid = entry['appid']
-        name = entry['name']
-
-        item = xbmcgui.ListItem(name)
-
-        item.addContextMenuItems([('Play', 'RunPlugin(plugin://plugin.program.steam.library/run/' + str(appid) + ')'), ('Install', 'RunPlugin(plugin://plugin.program.steam.library/install/' + str(appid) + ')')])
-        item.setArt({ 'thumb': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/header.jpg', 'fanart': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/page_bg_generated_v6b.jpg' })
-
-        if not xbmcplugin.addDirectoryItem(handle=handle, url=plugin.url_for(run, id=str(appid)), listitem=item, totalItems=totalItems): break
-
-    xbmcplugin.addSortMethod(handle, xbmcplugin.SORT_METHOD_LABEL)
-    xbmcplugin.endOfDirectory(handle, succeeded=True)
 
 @plugin.route('/installed')
-def installed():
-
-    if __addon__.getSetting('steam-id') == '' or __addon__.getSetting('steam-key') == '':
-
-        # ensure required data is available
+def installed_games():
+    if not all_required_credentials_available():
         return
 
-    if os.path.isdir(__addon__.getSetting('steam-path')) == False:
-
+    if not os.path.isdir(__addon__.getSetting('steam-path')):
         # ensure required data is available
-        notify = xbmcgui.Dialog()
-        notify.notification('Error', 'Unable to find your Steam path, please check your settings.', xbmcgui.NOTIFICATION_ERROR)
-
+        show_error(NameError("steam-path not found"), 'Unable to find your Steam path, please check your settings.')
         return
-
-    handle = int(sys.argv[1])
 
     try:
+        steam_games_details = steam.get_user_games(__addon__.getSetting('steam-key'), __addon__.getSetting('steam-id'))
 
-        # query the steam web api for a full list of steam applications/games that belong to the user
-        response = requests.get('https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=' + __addon__.getSetting('steam-key') + '&steamid=' + __addon__.getSetting('steam-id') + '&include_appinfo=1&format=json', timeout=10)
-        response.raise_for_status()
-
-    except requests.exceptions.RequestException as e:
-
+    except IOError as e:
         # something went wrong, can't scan the steam library
-        notify = xbmcgui.Dialog()
-        notify.notification('Error', 'An unexpected error has occurred while contacting Steam. Please ensure your Steam credentials are correct and then try again. If this problem persists please contact support.', xbmcgui.NOTIFICATION_ERROR)
-
-        log(str(e), xbmc.LOGERROR)
-
+        show_error(e, 'An unexpected error has occurred while contacting Steam. Please ensure your Steam credentials are correct and then try again. '
+                      'If this problem persists please contact support.')
         return
 
-    apps = registry.get_registry_values(os.path.join(__addon__.getSetting('steam-path'), 'registry.vdf'))
-    data = response.json()
+    installed_appids = registry.get_installed_steam_apps(os.path.join(__addon__.getSetting('steam-path'), 'registry.vdf'))
 
-    for entry in data['response']['games']:
+    # filter out any applications not listed as installed
+    steam_installed_games = filter(lambda app_entry: str(app_entry['appid']) in installed_appids, steam_games_details)
 
-        appid = entry['appid']
-        name = entry['name']
+    directory_items = create_directory_items(steam_installed_games)
+    xbmcplugin.addDirectoryItems(plugin.handle, directory_items)
 
-        # filter out any applications not listed as installed
-        if str(appid) not in apps: continue
+    xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_LABEL)
+    xbmcplugin.endOfDirectory(plugin.handle, succeeded=True)
 
-        item = xbmcgui.ListItem(name)
-
-        item.addContextMenuItems([('Play', 'RunPlugin(plugin://plugin.program.steam.library/run/' + str(appid) + ')'), ('Install', 'RunPlugin(plugin://plugin.program.steam.library/install/' + str(appid) + ')')])
-        item.setArt({ 'thumb': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/header.jpg', 'fanart': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/page_bg_generated_v6b.jpg' })
-
-        if not xbmcplugin.addDirectoryItem(handle=handle, url=plugin.url_for(run, id=str(appid)), listitem=item): break
-
-    xbmcplugin.addSortMethod(handle, xbmcplugin.SORT_METHOD_LABEL)
-    xbmcplugin.endOfDirectory(handle, succeeded=True)
 
 @plugin.route('/recent')
-def recent():
-
-    if __addon__.getSetting('steam-id') == '' or __addon__.getSetting('steam-key') == '':
-
-        # ensure required data is available
+def recent_games():
+    if not all_required_credentials_available():
         return
-
-    handle = int(sys.argv[1])
 
     try:
+        steam_games_details = steam.get_user_games(__addon__.getSetting('steam-key'), __addon__.getSetting('steam-id'), recent_only=True)
 
-        # query the steam web api for a full list of steam applications/games that belong to the user
-        response = requests.get('https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v0001/?key=' + __addon__.getSetting('steam-key') + '&steamid=' + __addon__.getSetting('steam-id') + '&include_appinfo=1&format=json', timeout=10)
-        response.raise_for_status()
-
-    except requests.exceptions.RequestException as e:
-
+    except IOError as e:
         # something went wrong, can't scan the steam library
-        notify = xbmcgui.Dialog()
-        notify.notification('Error', 'An unexpected error has occurred while contacting Steam. Please ensure your Steam credentials are correct and then try again. If this problem persists please contact support.', xbmcgui.NOTIFICATION_ERROR)
-
-        log(str(e), xbmc.LOGERROR)
-
+        show_error(e, 'An unexpected error has occurred while contacting Steam. Please ensure your Steam credentials are correct and then try again. '
+                      'If this problem persists please contact support.')
         return
 
-    data = response.json()
-    totalItems = data['response']['total_count']
+    directory_items = create_directory_items(steam_games_details)
+    xbmcplugin.addDirectoryItems(plugin.handle, directory_items)
 
-    for entry in data['response']['games']:
+    xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_UNSORTED)
+    xbmcplugin.endOfDirectory(plugin.handle, succeeded=True)
 
-        appid = entry['appid']
-        name = entry['name']
 
+@plugin.route('/install/<appid>')
+def install(appid):
+    if not os.path.isfile(__addon__.getSetting('steam-exe')):
+        # ensure required data is available
+        show_error(NameError('steam-exe not found'), 'Unable to find your Steam executable, please check your settings.')
+        return
+
+    steam.install(__addon__.getSetting('steam-exe'), appid)
+
+
+@plugin.route('/run/<appid>')
+def run(appid):
+    if not os.path.isfile(__addon__.getSetting('steam-exe')):
+        # ensure required data is available
+        show_error(NameError('steam-exe not found'), 'Unable to find your Steam executable, please check your settings.')
+        return
+
+    steam.run(__addon__.getSetting('steam-exe'), __addon__.getSetting('steam-args'), appid)
+
+
+def create_directory_items(app_entries):
+    """
+    Creates a list item for each game/app entry provided
+
+    :param app_entries: array of game entries, with each entry containing at least keys : appid, name, img_icon_url, img_logo_url, playtime_forever
+    :returns: an array of list items of the game entries, formatted like so : [(url,listItem,bool),..]
+    """
+    directory_items = []
+    for app_entry in app_entries:
+        appid = str(app_entry['appid'])
+        name = app_entry['name']
+
+        run_url = plugin.url_for(run, appid=appid)
         item = xbmcgui.ListItem(name)
-        item.setArt({ 'thumb': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/header.jpg', 'fanart': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(appid) + '/page_bg_generated_v6b.jpg' })
 
-        if not xbmcplugin.addDirectoryItem(handle=handle, url=plugin.url_for(run, id=str(appid)), listitem=item, totalItems=totalItems): break
+        item.addContextMenuItems([('Play', 'RunPlugin(' + run_url + ')'),
+                                  ('Install', 'RunPlugin(' + plugin.url_for(install, appid=appid) + ')')])
 
-    xbmcplugin.addSortMethod(handle, xbmcplugin.SORT_METHOD_UNSORTED)
-    xbmcplugin.endOfDirectory(handle, succeeded=True)
+        art_dictionary = create_arts_dictionary(app_entry)
+        item.setArt(art_dictionary)
 
-@plugin.route('/install/<id>')
-def install(id):
+        directory_items.append((run_url, item, False))
 
-    if os.path.isfile(__addon__.getSetting('steam-exe')) == False:
+    return directory_items
 
-        # ensure required data is available
-        notify = xbmcgui.Dialog()
-        notify.notification('Error', 'Unable to find your Steam executable, please check your settings.', xbmcgui.NOTIFICATION_ERROR)
 
-        return
+def create_arts_dictionary(app_entry):
+    """
+    Creates a dictionary of arts keys and their associated links, for a given app entry.
+    :param app_entry: dictionary of app informations, containing at least the keys : appid, img_icon_url, img_logo_url
+    :return: dictionary of arts for the app.
+    """
+    art_dictionary = {'thumb': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(app_entry['appid']) + '/header.jpg',
+                      'fanart': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(app_entry['appid']) + '/page_bg_generated_v6b.jpg'}
+    return art_dictionary
 
-    log('executing ' + __addon__.getSetting('steam-exe') + ' steam://install/' + id)
-
-    # https://developer.valvesoftware.com/wiki/Steam_browser_protocol
-    subprocess.call([__addon__.getSetting('steam-exe'), 'steam://install/' + id])
-
-@plugin.route('/run/<id>')
-def run(id):
-
-    if os.path.isfile(__addon__.getSetting('steam-exe')) == False:
-
-        # ensure required data is available
-        notify = xbmcgui.Dialog()
-        notify.notification('Error', 'Unable to find your Steam executable, please check your settings.', xbmcgui.NOTIFICATION_ERROR)
-
-        return
-
-    userArgs = shlex.split(__addon__.getSetting('steam-args'))
-
-    log('executing ' + __addon__.getSetting('steam-exe') + ' ' + __addon__.getSetting('steam-args') + ' steam://rungameid/' + id)
-
-    # https://developer.valvesoftware.com/wiki/Steam_browser_protocol
-    subprocess.call([__addon__.getSetting('steam-exe')] + userArgs + ['steam://rungameid/' + id])
 
 def main():
-
     log('steam-id = ' + __addon__.getSetting('steam-id'))
     log('steam-key = ' + __addon__.getSetting('steam-key'))
     log('steam-exe = ' + __addon__.getSetting('steam-exe'))
     log('steam-path = ' + __addon__.getSetting('steam-path'))
 
     # backwards compatibility for versions prior to 0.6.0
-    if __addon__.getSetting('steam-id') != '' and __addon__.getSetting('steam-key') != '' and __addon__.getSetting('steam-path') != '' and __addon__.getSetting('steam-exe') == '':
+    if __addon__.getSetting('steam-id') != '' and __addon__.getSetting('steam-key') != '' \
+            and __addon__.getSetting('steam-path') != '' and __addon__.getSetting('steam-exe') == '':
 
-        __addon__.setSetting('steam-exe', __addon__.getSetting('steam-path'));
+        __addon__.setSetting('steam-exe', __addon__.getSetting('steam-path'))
 
         if sys.platform == "linux" or sys.platform == "linux2":
 
-            __addon__.setSetting('steam-path', os.path.expanduser('~/.steam'));
+            __addon__.setSetting('steam-path', os.path.expanduser('~/.steam'))
 
         elif sys.platform == "win32":
 
@@ -233,7 +182,7 @@ def main():
         if sys.platform == "linux" or sys.platform == "linux2":
 
             __addon__.setSetting('steam-exe', '/usr/bin/steam')
-            __addon__.setSetting('steam-path', os.path.expanduser('~/.steam'));
+            __addon__.setSetting('steam-path', os.path.expanduser('~/.steam'))
 
         elif sys.platform == "darwin":
 
@@ -251,13 +200,11 @@ def main():
             __addon__.setSetting('steam-path', os.path.expandvars('%ProgramFiles(x86)%\\Steam\\Steam.exe'))
 
     if __addon__.getSetting('version') == '':
-
         # first time run, store version
-        __addon__.setSetting('version', '0.6.0');
+        __addon__.setSetting('version', '0.6.0')
 
     # prompt the user to configure the plugin with their steam details
-    if __addon__.getSetting('steam-id') == '' or __addon__.getSetting('steam-key') == '':
-
+    if not all_required_credentials_available():
         __addon__.openSettings()
 
     plugin.run()
