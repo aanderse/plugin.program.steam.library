@@ -1,3 +1,4 @@
+import requests
 import xbmc
 import xbmcaddon
 import xbmcgui
@@ -10,15 +11,17 @@ def log(msg, level=xbmc.LOGDEBUG):
         xbmc.log('[%s] %s' % (__addon__.getAddonInfo('id'), msg), level=level)
 
 
-def show_error(e, message):
+def show_error(e, message, display_notification=True):
     """ Displays an error message to the user and log the cause.
 
     :type e: Exception
     :param e: An exception object to add to the error log
     :param message: An error message to display to the user
+    :param display_notification: boolean indication whether or not an error notification is shown in Kodi
     """
-    notify = xbmcgui.Dialog()
-    notify.notification('Error', message, xbmcgui.NOTIFICATION_ERROR)
+    if display_notification:
+        notify = xbmcgui.Dialog()
+        notify.notification('Error', message, xbmcgui.NOTIFICATION_ERROR)
     log(str(e), xbmc.LOGERROR)
 
 
