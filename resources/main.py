@@ -2,6 +2,8 @@ import os
 import routing
 import sys
 import xbmcplugin
+
+import arts
 import registry
 import steam
 from util import *
@@ -143,11 +145,21 @@ def create_directory_items(app_entries):
 def create_arts_dictionary(app_entry):
     """
     Creates a dictionary of arts keys and their associated links, for a given app entry.
-    :param app_entry: dictionary of app informations, containing at least the keys : appid, img_icon_url, img_logo_url
+    :param app_entry: dictionary of app information, containing at least the keys : appid, img_icon_url, img_logo_url
     :return: dictionary of arts for the app.
     """
-    art_dictionary = {'thumb': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(app_entry['appid']) + '/header.jpg',
-                      'fanart': 'http://cdn.akamai.steamstatic.com/steam/apps/' + str(app_entry['appid']) + '/page_bg_generated_v6b.jpg'}
+
+    appid = str(app_entry['appid'])
+
+    art_dictionary = {
+        'poster': arts.resolve_media_url('poster', appid),  # plugin.url_for(resolve_media, media_type='poster', appid=appid),  # library asset, often missing
+        'landscape': arts.resolve_media_url('landscape', appid),  # plugin.url_for(resolve_media, media_type='landscape', appid=appid),
+        'banner': arts.resolve_media_url('banner', appid),  # plugin.url_for(resolve_media, media_type='banner', appid=appid),
+        'clearlogo': arts.resolve_media_url('clearlogo', appid),  # plugin.url_for(resolve_media, media_type='clearlogo', appid=appid),
+        'thumb': arts.resolve_media_url('thumb', appid),  # plugin.url_for(resolve_media, media_type='thumb', appid=appid),
+        'fanart': arts.resolve_media_url('fanart', appid),  # plugin.url_for(resolve_media, media_type='fanart', appid=appid),
+        'icon': arts.resolve_media_url('icon', appid, app_entry['img_icon_url'])
+    }
     return art_dictionary
 
 
