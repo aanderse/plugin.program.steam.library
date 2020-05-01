@@ -123,6 +123,11 @@ def create_directory_items(app_entries):
     :param app_entries: array of game entries, with each entry containing at least keys : appid, name, img_icon_url, img_logo_url, playtime_forever
     :returns: an array of list items of the game entries, formatted like so : [(url,listItem,bool),..]
     """
+
+    # We set the folder content to "movies" as the program/game contents are locked out of many useful views, such as posters, headers, and more.
+    xbmcplugin.setContent(plugin.handle, "movies")
+    # TODO setContent to games when more skins support this content type.
+
     directory_items = []
     for app_entry in app_entries:
         appid = str(app_entry['appid'])
@@ -132,7 +137,8 @@ def create_directory_items(app_entries):
         item = xbmcgui.ListItem(name)
 
         item.addContextMenuItems([('Play', 'RunPlugin(' + run_url + ')'),
-                                  ('Install', 'RunPlugin(' + plugin.url_for(install, appid=appid) + ')')])
+                                  ('Install', 'RunPlugin(' + plugin.url_for(install, appid=appid) + ')')],
+                                 replaceItems=True)  # Since we set the content type to "movies", default movie context elements may appear. We replace them.
 
         art_dictionary = create_arts_dictionary(app_entry)
         item.setArt(art_dictionary)
