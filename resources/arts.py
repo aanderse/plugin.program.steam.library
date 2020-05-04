@@ -27,10 +27,12 @@ cached_requests = requests_cache.core.CachedSession(ART_AVAILABILITY_CACHE_FILE,
 # Dictionary containing for each art type, a base_url for the art (to format with appid / img_icon_path afterwards), and a fallback art type.
 arts_urls = {  # {0} is appid, {1} is a special path provided by steam api for the icon
     'poster': {'base_url': 'http://cdn.akamai.steamstatic.com/steam/apps/{0}/library_600x900.jpg', 'fallback_media': 'landscape'},
-    'landscape': {'base_url': 'http://cdn.akamai.steamstatic.com/steam/apps/{0}//header.jpg', 'fallback_media': 'thumb'},
-    'banner': {'base_url': 'http://cdn.akamai.steamstatic.com/steam/apps/{0}/library_hero.jpg', 'fallback_media': 'thumb'},
-    'thumb': {'base_url': 'http://cdn.akamai.steamstatic.com/steam/apps/{0}/header.jpg', 'fallback_media': 'fanart'},
-    'fanart': {'base_url': 'http://cdn.akamai.steamstatic.com/steam/apps/{0}/page_bg_generated_v6b.jpg', 'fallback_media': None},
+    'banner': {'base_url': 'http://cdn.akamai.steamstatic.com/steam/apps/{0}/library_hero.jpg', 'fallback_media': 'landscape'},
+    'landscape': {'base_url': 'http://cdn.akamai.steamstatic.com/steam/apps/{0}/header.jpg', 'fallback_media': None},
+    'thumb': {'base_url': 'http://cdn.akamai.steamstatic.com/steam/apps/{0}/header.jpg', 'fallback_media': None},
+    'fanart': {'base_url': 'http://cdn.akamai.steamstatic.com/steam/apps/{0}/library_hero.jpg', 'fallback_media': 'fanart2'},
+    'fanart2': {'base_url': 'http://cdn.akamai.steamstatic.com/steam/apps/{0}/header.jpg', 'fallback_media': 'fanart3'},
+    'fanart3': {'base_url': 'http://cdn.akamai.steamstatic.com/steam/apps/{0}/page_bg_generated_v6b.jpg', 'fallback_media': None},
     'icon': {'base_url': 'https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/{0}/{1}.jpg', 'fallback_media': None},
     'clearlogo': {'base_url': 'http://cdn.akamai.steamstatic.com/steam/apps/{0}/logo.png', 'fallback_media': None}  # No fallback possible for clearlogo
 }
