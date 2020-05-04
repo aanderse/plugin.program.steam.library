@@ -47,5 +47,6 @@
             <screenshot>resources/screenshot-03.jpg</screenshot>
             <screenshot>resources/screenshot-04.jpg</screenshot>
         </assets>
+        <source>https://github.com/aanderse/plugin.program.steam.library</source>
     </extension>
 </addon>
