@@ -114,6 +114,11 @@ def run(appid):
     steam.run(__addon__.getSetting('steam-exe'), __addon__.getSetting('steam-args'), appid)
 
 
+@plugin.route('/delete_cache')
+def delete_cache():
+    steam.delete_cache()
+
+
 def create_directory_items(app_entries):
     """
     Creates a list item for each game/app entry provided
