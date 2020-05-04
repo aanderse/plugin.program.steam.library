@@ -10,16 +10,20 @@ import xbmcplugin
 
 from util import show_error
 
+__addon__ = xbmcaddon.Addon()
+enableArtFallback = __addon__.getSetting("enable-art-fallback") == 'true'  # Kodi stores boolean settings as strings
+minutesBeforeArtsExpiration = int(__addon__.getSetting("arts-expire-after-minutes"))  # Default is 1month
+
 # define the cache file to reside in the ..\Kodi\userdata\addon_data\(your addon)
-addonUserDataFolder = xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('profile'))
+addonUserDataFolder = xbmc.translatePath(__addon__.getAddonInfo('profile'))
 ART_AVAILABILITY_CACHE_FILE = xbmc.translatePath(os.path.join(addonUserDataFolder, 'requests_cache_arts'))
-minutesBeforeArtsExpiration = int(xbmcplugin.getSetting(int(sys.argv[1]), "arts-expire-after-minutes"))  # Default is 1month
 
 cached_requests = requests_cache.core.CachedSession(ART_AVAILABILITY_CACHE_FILE, backend='sqlite',
                                                     expire_after=60 * minutesBeforeArtsExpiration,
                                                     allowable_methods=('HEAD',),
                                                     allowable_codes=(200, 404),
-                                                    old_data_on_error=True)
+                                                    old_data_on_error=True,
+                                                    fast_save=True)
 
 # Todo : tweak fallbacks and arts to have the best look in Kodi
 #  TODO note which are safe to use and which can be missing
@@ -63,9 +67,12 @@ def resolve_media_url(media_type, appid, img_icon_path=''):
 
     while valid_media_url is None and art_data is not None:
         art_url = art_data.get('base_url').format(appid, img_icon_path)
-        if is_art_url_available(art_url):
+        if not enableArtFallback or is_art_url_available(art_url):
+            # If art fallback is disabled, we directly assume the art url as valid.
+            # If art fallback is enabled, we check if the art is available before proceeding
             valid_media_url = art_url
         else:
+            # If the art is not available (and art fallback is enabled) we try with the defined fallback
             fallback_media_type = art_data.get("fallback", None)
             art_data = arts_urls.get(fallback_media_type, None)
 
