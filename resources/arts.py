@@ -1,12 +1,9 @@
-import sys
-
 import xbmc
 import xbmcaddon
 
 import os
 import requests
 import requests_cache
-import xbmcplugin
 
 from util import show_error
 
