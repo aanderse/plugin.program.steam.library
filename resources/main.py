@@ -39,6 +39,7 @@ def all_games():
     xbmcplugin.addDirectoryItems(plugin.handle, directory_items)
 
     xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_LABEL)
+    xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_PLAYCOUNT)
     xbmcplugin.endOfDirectory(plugin.handle, succeeded=True)
 
 
@@ -70,6 +71,7 @@ def installed_games():
     xbmcplugin.addDirectoryItems(plugin.handle, directory_items)
 
     xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_LABEL)
+    xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_PLAYCOUNT)
     xbmcplugin.endOfDirectory(plugin.handle, succeeded=True)
 
 
@@ -90,7 +92,9 @@ def recent_games():
     directory_items = create_directory_items(steam_games_details)
     xbmcplugin.addDirectoryItems(plugin.handle, directory_items)
 
-    xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_UNSORTED)
+    xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_UNSORTED, "Last played")
+    xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_PLAYCOUNT)
+    xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_LABEL)
     xbmcplugin.endOfDirectory(plugin.handle, succeeded=True)
 
 
@@ -128,6 +132,8 @@ def create_directory_items(app_entries):
 
         run_url = plugin.url_for(run, appid=appid)
         item = xbmcgui.ListItem(name)
+        item.setUniqueIDs({'steam': appid, 'steam_img_icon': app_entry['img_icon_url']})
+        item.setInfo('video', {'playcount': app_entry.get('playtime_forever', 0)})
 
         item.addContextMenuItems([('Play', 'RunPlugin(' + run_url + ')'),
                                   ('Install', 'RunPlugin(' + plugin.url_for(install, appid=appid) + ')')])
