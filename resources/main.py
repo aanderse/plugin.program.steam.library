@@ -134,6 +134,7 @@ def create_directory_items(app_entries):
         item = xbmcgui.ListItem(name)
         item.setUniqueIDs({'steam': appid, 'steam_img_icon': app_entry['img_icon_url']})
         item.setInfo('video', {'playcount': app_entry.get('playtime_forever', 0)})
+        item.setContentLookup(False)  # Tells Kodi not to send HEAD requests (used to determine MIME type for example) to the item's run URL.
 
         item.addContextMenuItems([('Play', 'RunPlugin(' + run_url + ')'),
                                   ('Install', 'RunPlugin(' + plugin.url_for(install, appid=appid) + ')')])
