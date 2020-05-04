@@ -9,10 +9,10 @@ from util import show_error
 
 # define the cache file to reside in the ..\Kodi\userdata\addon_data\(your addon)
 addonUserDataFolder = xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('profile'))
-art_availability_cache_file = xbmc.translatePath(os.path.join(addonUserDataFolder, 'requests_cache_arts'))
+ART_AVAILABILITY_CACHE_FILE = xbmc.translatePath(os.path.join(addonUserDataFolder, 'requests_cache_arts'))
 
 # cache expires after: 86400=1 day   604800=7 days
-cached_requests = requests_cache.core.CachedSession(art_availability_cache_file, backend='sqlite',
+cached_requests = requests_cache.core.CachedSession(ART_AVAILABILITY_CACHE_FILE, backend='sqlite',
                                                     expire_after=604800 * 2,
                                                     allowable_methods=('HEAD',),
                                                     allowable_codes=(200, 404),
@@ -69,3 +69,7 @@ def resolve_media_url(media_type, appid, img_icon_path=''):
         return
 
     return valid_media_url
+
+
+def delete_cache():
+    os.remove(ART_AVAILABILITY_CACHE_FILE + ".sqlite")
