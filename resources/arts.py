@@ -1,19 +1,22 @@
+import sys
+
 import xbmc
 import xbmcaddon
 
 import os
 import requests
 import requests_cache
+import xbmcplugin
 
 from util import show_error
 
 # define the cache file to reside in the ..\Kodi\userdata\addon_data\(your addon)
 addonUserDataFolder = xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('profile'))
 ART_AVAILABILITY_CACHE_FILE = xbmc.translatePath(os.path.join(addonUserDataFolder, 'requests_cache_arts'))
+minutesBeforeArtsExpiration = int(xbmcplugin.getSetting(int(sys.argv[1]), "arts-expire-after-minutes"))  # Default is 1month
 
-# cache expires after: 86400=1 day   604800=7 days
 cached_requests = requests_cache.core.CachedSession(ART_AVAILABILITY_CACHE_FILE, backend='sqlite',
-                                                    expire_after=604800 * 2,
+                                                    expire_after=60 * minutesBeforeArtsExpiration,
                                                     allowable_methods=('HEAD',),
                                                     allowable_codes=(200, 404),
                                                     old_data_on_error=True)

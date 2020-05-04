@@ -7,5 +7,6 @@
     <setting id="steam-path" type="folder" label="Your Steam folder (contains registry.vdf)"/>
     <setting id="steam-args" type="text" label="Arguments to pass to your Steam executable"/>
     <setting id="version" type="text" label="Internal version number, do not modify" visible="false"/>
+    <setting id="arts-expire-after-minutes" type="number" default="43800" label="Number of minutes before expiration of the arts availability cache"/>
     <setting id="delete-cache"  type="action" label="Clean available games and arts cache" action="RunPlugin(plugin://plugin.program.steam.library/delete_cache)"/>
 </settings>
