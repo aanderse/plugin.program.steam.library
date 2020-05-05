@@ -163,13 +163,13 @@ def create_arts_dictionary(app_entry):
     appid = str(app_entry['appid'])
 
     art_dictionary = {
-        'poster': arts.resolve_media_url('poster', appid),  # plugin.url_for(resolve_media, media_type='poster', appid=appid),  # library asset, often missing
-        'landscape': arts.resolve_media_url('landscape', appid),  # plugin.url_for(resolve_media, media_type='landscape', appid=appid),
-        'banner': arts.resolve_media_url('banner', appid),  # plugin.url_for(resolve_media, media_type='banner', appid=appid),
-        'clearlogo': arts.resolve_media_url('clearlogo', appid),  # plugin.url_for(resolve_media, media_type='clearlogo', appid=appid),
-        'thumb': arts.resolve_media_url('thumb', appid),  # plugin.url_for(resolve_media, media_type='thumb', appid=appid),
-        'fanart': arts.resolve_media_url('fanart', appid),  # plugin.url_for(resolve_media, media_type='fanart', appid=appid),
-        'icon': arts.resolve_media_url('icon', appid, app_entry['img_icon_url'])
+        'poster': arts.resolve_art_url('poster', appid),
+        'landscape': arts.resolve_art_url('landscape', appid),
+        'banner': arts.resolve_art_url('banner', appid),
+        'clearlogo': arts.resolve_art_url('clearlogo', appid),
+        'thumb': arts.resolve_art_url('thumb', appid),
+        'fanart': arts.resolve_art_url('fanart', appid),
+        'icon': arts.resolve_art_url('icon', appid, app_entry['img_icon_url'])
     }
     return art_dictionary
 
