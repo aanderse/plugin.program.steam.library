@@ -9,7 +9,7 @@ from util import show_error
 
 __addon__ = xbmcaddon.Addon()
 enableArtFallback = __addon__.getSetting("enable-art-fallback") == 'true'  # Kodi stores boolean settings as strings
-minutesBeforeArtsExpiration = int(__addon__.getSetting("arts-expire-after-minutes"))  # Default is 1month
+minutesBeforeArtsExpiration = int(__addon__.getSetting("arts-expire-after-minutes"))  # Default is 2 months
 
 # define the cache file to reside in the ..\Kodi\userdata\addon_data\(your addon)
 addonUserDataFolder = xbmc.translatePath(__addon__.getAddonInfo('profile'))
