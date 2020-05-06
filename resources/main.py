@@ -161,16 +161,14 @@ def create_arts_dictionary(app_entry):
     """
 
     appid = str(app_entry['appid'])
+    img_icon_url = app_entry['img_icon_url']
+    art_dictionary = {}
 
-    art_dictionary = {
-        'poster': arts.resolve_art_url('poster', appid),
-        'landscape': arts.resolve_art_url('landscape', appid),
-        'banner': arts.resolve_art_url('banner', appid),
-        'clearlogo': arts.resolve_art_url('clearlogo', appid),
-        'thumb': arts.resolve_art_url('thumb', appid),
-        'fanart': arts.resolve_art_url('fanart', appid),
-        'icon': arts.resolve_art_url('icon', appid, app_entry['img_icon_url'])
-    }
+    # Multiple fanart https://kodi.wiki/view/Artwork_types#fanart.23
+    SUPPORTED_ART_TYPES = ['poster', 'landscape', 'banner', 'clearlogo', 'thumb', 'fanart', 'fanart1', 'fanart2', 'icon']
+
+    for art_type in SUPPORTED_ART_TYPES:
+        art_dictionary[art_type] = arts.resolve_art_url(art_type, appid, img_icon_url)
     return art_dictionary
 
 

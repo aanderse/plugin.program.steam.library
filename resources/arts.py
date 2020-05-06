@@ -20,18 +20,28 @@ cached_requests = requests_cache.core.CachedSession(ART_AVAILABILITY_CACHE_FILE,
                                                     allowable_methods=('HEAD',), allowable_codes=(200, 404),
                                                     old_data_on_error=True,
                                                     fast_save=True)
+# Existing Steam art types urls, to format to format with appid / img_icon_path
+STEAM_ARTS_TYPES = {  # img_icon_path is provided by steam API to get the icon. https://developer.valvesoftware.com/wiki/Steam_Web_API#GetOwnedGames_.28v0001.29
+    'poster': 'http://cdn.akamai.steamstatic.com/steam/apps/{appid}/library_600x900.jpg',  # Can return 404
+    'hero': 'http://cdn.akamai.steamstatic.com/steam/apps/{appid}/library_hero.jpg',  # Can return 404
+    'header': 'http://cdn.akamai.steamstatic.com/steam/apps/{appid}/header.jpg',
+    'generated_bg': 'http://cdn.akamai.steamstatic.com/steam/apps/{appid}/page_bg_generated_v6b.jpg',  # Auto generated background with a shade of blue.
+    'icon': 'https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/{appid}/{img_icon_path}.jpg',
+    'logo': 'http://cdn.akamai.steamstatic.com/steam/apps/{appid}/logo.png'  # Can return 404
+}
 
-# Dictionary containing for each art type, a base_url for the art (to format with appid / img_icon_path afterwards), and a fallback art type.
-ARTS_DATA = {  # img_icon_path is a path provided by steam to get the icon. https://developer.valvesoftware.com/wiki/Steam_Web_API#GetOwnedGames_.28v0001.29
-    'poster': {'base_url': 'http://cdn.akamai.steamstatic.com/steam/apps/{appid}/library_600x900.jpg', 'fallback_media': 'landscape'},  # Can return 404
-    'banner': {'base_url': 'http://cdn.akamai.steamstatic.com/steam/apps/{appid}/library_hero.jpg', 'fallback_media': 'landscape'},  # Can return 404
-    'landscape': {'base_url': 'http://cdn.akamai.steamstatic.com/steam/apps/{appid}/header.jpg', 'fallback_media': None},
-    'thumb': {'base_url': 'http://cdn.akamai.steamstatic.com/steam/apps/{appid}/header.jpg', 'fallback_media': None},
-    'fanart': {'base_url': 'http://cdn.akamai.steamstatic.com/steam/apps/{appid}/library_hero.jpg', 'fallback_media': 'fanart2'},  # Can return 404
-    'fanart2': {'base_url': 'http://cdn.akamai.steamstatic.com/steam/apps/{appid}/header.jpg', 'fallback_media': 'fanart3'},
-    'fanart3': {'base_url': 'http://cdn.akamai.steamstatic.com/steam/apps/{appid}/page_bg_generated_v6b.jpg', 'fallback_media': None},
-    'icon': {'base_url': 'https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/{appid}/{img_icon_path}.jpg', 'fallback_media': None},
-    'clearlogo': {'base_url': 'http://cdn.akamai.steamstatic.com/steam/apps/{appid}/logo.png', 'fallback_media': None}  # Can return 404
+# Dictionary containing for each art type, a url for the art (to format with appid / img_icon_path afterwards), and a fallback art type.
+# Having no fallback also means that the art url won't be tested
+ARTS_ASSIGNMENTS = {
+    'poster': {'url': STEAM_ARTS_TYPES['poster'], 'fallback': 'landscape'},
+    'banner': {'url': STEAM_ARTS_TYPES['hero'], 'fallback': 'landscape'},
+    'fanart': {'url': STEAM_ARTS_TYPES['hero'], 'fallback': 'fanart1'},
+    'fanart1': {'url': STEAM_ARTS_TYPES['header'], 'fallback': None},
+    'fanart2': {'url': STEAM_ARTS_TYPES['generated_bg'], 'fallback': None},  # Multiple fanart https://kodi.wiki/view/Artwork_types#fanart.23
+    'landscape': {'url': STEAM_ARTS_TYPES['header'], 'fallback': None},
+    'thumb': {'url': STEAM_ARTS_TYPES['header'], 'fallback': None},
+    'icon': {'url': STEAM_ARTS_TYPES['icon'], 'fallback': None},
+    'clearlogo': {'url': STEAM_ARTS_TYPES['logo'], 'fallback': None}
 }
 
 
@@ -65,17 +75,17 @@ def resolve_art_url(art_type, appid, img_icon_path='', art_fallback_enabled=artF
     :return: resolved art URL. Can be the URL of another available art if .
     """
     valid_art_url = None
-    requested_art_data = ARTS_DATA.get(art_type, None)
+    requested_art = ARTS_ASSIGNMENTS.get(art_type, None)
 
-    while valid_art_url is None and requested_art_data is not None:  # If the current media type is defined and we did not find a valid url yet
-        art_url = requested_art_data.get('base_url').format(appid=appid, img_icon_path=img_icon_path)  # We replace "{appid}" and "{img_icon_path}" in the url
-        fallback_art_type = requested_art_data.get("fallback_media", None)
+    while valid_art_url is None and requested_art is not None:  # If the current media type is defined and we did not find a valid url yet
+        art_url = requested_art.get('url').format(appid=appid, img_icon_path=img_icon_path)  # We replace "{appid}" and "{img_icon_path}" in the url
+        fallback_art_type = requested_art.get("fallback", None)
         if (not art_fallback_enabled) or (fallback_art_type is None) or is_art_url_available(art_url):
             # If art fallback is disabled, or if there is no fallback defined, we directly assume the art url as valid.
             # Otherwise, if art fallback is enabled and there is a fallback defined, we check if is_art_url_available before proceeding
             valid_art_url = art_url
         else:  # If art fallback is enabled and art is not available, we set the current art data to the defined fallback, before retrying.
-            requested_art_data = ARTS_DATA.get(fallback_art_type, None)  # Art data will be None if the fallback_art_type does not exist in the art_urls dict
+            requested_art = ARTS_ASSIGNMENTS.get(fallback_art_type, None)  # Art data will be None if the fallback_art_type does not exist in the art_urls dict
 
     if valid_art_url is None:  # If the previous loop could not find a valid media url among the defined art types
         show_error(None, "Issue obtaining a media", display_notification=False)
