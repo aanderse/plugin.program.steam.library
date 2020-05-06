@@ -1,14 +1,24 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <settings>
-    <setting id="debug" type="bool" label="Enable debugging mode" default="false"/>
-    <setting id="steam-id" type="text" label="Your Steam user id"/>
-    <setting id="steam-key" type="text" label="Your Steam web API key"/>
-    <setting id="steam-exe" type="executable" label="Your Steam executable file (Steam.exe)"/>
-    <setting id="steam-path" type="folder" label="Your Steam folder (contains registry.vdf)"/>
-    <setting id="steam-args" type="text" label="Arguments to pass to your Steam executable"/>
-    <setting id="version" type="text" label="Internal version number, do not modify" visible="false"/>
-    <setting id="enable-art-fallback" type="bool" default="true" label="Fallback to another art type if a game has missing art. First launch may be longer for large libraries."/>
-    <setting id="games-expire-after-minutes" type="number" default="4320" label="Number of minutes before expiration of the games lists cache"/>
-    <setting id="arts-expire-after-months" type="number" default="2" label="Number of months before expiration of the arts availability cache"/>
-    <setting id="delete-cache"  type="action" label="Clean available games and arts cache" action="RunPlugin(plugin://plugin.program.steam.library/delete_cache)"/>
+    <category label="Required Steam Details">
+        <setting id="steam-id" type="text" label="Your Steam user id"/>
+        <setting id="steam-key" type="text" label="Your Steam web API key"/>
+        <setting id="steam-exe" type="executable" label="Your Steam executable file (Steam.exe)"/>
+        <setting id="steam-path" type="folder" label="Your Steam folder (contains registry.vdf)"/>
+        <setting id="steam-args" type="text" label="Arguments to pass to your Steam executable"/>
+    </category>
+    <category label="Cache Management">
+        <setting id="games-expire-after-minutes" type="number" default="4320"
+                 label="Number of minutes before expiration of the games lists cache"/>
+        <setting id="arts-expire-after-months" type="number" default="2"
+                 label="Number of months before expiration of the arts availability cache"/>
+        <setting id="delete-cache" type="action" action="RunPlugin(plugin://plugin.program.steam.library/delete_cache)"
+                 label="Clean available games and arts cache"/>
+    </category>
+    <category label="Debugging">
+        <setting id="debug" type="bool" label="Enable debugging mode" default="false"/>
+        <setting id="enable-art-fallback" type="bool" default="true"
+                 label="Fallback to another art type if a game has missing art. First launch may be longer for large libraries."/>
+        <setting id="version" type="text" label="Internal version number, do not modify" visible="false"/>
+    </category>
 </settings>
