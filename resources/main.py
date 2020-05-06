@@ -122,6 +122,7 @@ def run(appid):
 
 @plugin.route('/delete_cache')
 def delete_cache():
+    steam.delete_cache()
     arts.delete_cache()
 
 

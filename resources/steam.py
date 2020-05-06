@@ -1,8 +1,27 @@
+import os
+import sys
 import shlex
 import subprocess
+
+import xbmc
+import xbmcaddon
+import xbmcplugin
+
 import requests
+import requests_cache
 
 from util import log
+
+__addon__ = xbmcaddon.Addon()
+# define the cache file to reside in the ..\Kodi\userdata\addon_data\(your addon)
+addonUserDataFolder = xbmc.translatePath(__addon__.getAddonInfo('profile'))
+STEAM_GAMES_CACHE_FILE = xbmc.translatePath(os.path.join(addonUserDataFolder, 'requests_cache_games'))
+minutesBeforeGamesListsExpiration = int(xbmcplugin.getSetting(int(sys.argv[1]), "games-expire-after-minutes"))  # Default is 3 days
+
+# cache expires after: 86400=1 day   604800=7 days
+cached_requests = requests_cache.core.CachedSession(STEAM_GAMES_CACHE_FILE, backend='sqlite',
+                                                    expire_after=60 * minutesBeforeGamesListsExpiration,
+                                                    old_data_on_error=True)
 
 
 def install(steam_exe_path, appid):
@@ -29,7 +48,7 @@ def run(steam_exe_path, steam_launch_args, appid):
     log('executing ' + steam_exe_path + ' ' + steam_launch_args + ' steam://rungameid/' + appid)
 
     # https://developer.valvesoftware.com/wiki/Steam_browser_protocol
-    subprocess.call([steam_exe_path] + user_args + ['steam://rungameid/' + appid]) #Concatenate the arrays into one
+    subprocess.call([steam_exe_path] + user_args + ['steam://rungameid/' + appid])  # Concatenate the arrays into one
 
 
 def get_user_games(steam_api_key, steam_user_id, recent_only=False):
@@ -73,13 +92,17 @@ def get_user_games(steam_api_key, steam_user_id, recent_only=False):
         api_url = 'https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/'
 
     # We send a request to the API, including needed parameters and "include_appinfo" so that game details are returned with the response.
-    response = requests.get(url=api_url,
-                            params={'key': steam_api_key,
-                                    'steamid': steam_user_id,
-                                    'include_appinfo': 1,
-                                    'format': 'json'},
-                            timeout=10)
+    response = cached_requests.get(url=api_url,
+                                   params={'key': steam_api_key,
+                                           'steamid': steam_user_id,
+                                           'include_appinfo': 1,
+                                           'format': 'json'},
+                                   timeout=5)
 
     response.raise_for_status()  # If the status code indicates an error, raise a HTTPError, which is itself a RequestException, based on the builtin IOError
     response_data = response.json().get('response', {})
     return response_data.get('games', {})
+
+
+def delete_cache():
+    os.remove(STEAM_GAMES_CACHE_FILE + ".sqlite")
