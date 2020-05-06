@@ -97,7 +97,7 @@ def get_user_games(steam_api_key, steam_user_id, recent_only=False):
                                            'steamid': steam_user_id,
                                            'include_appinfo': 1,
                                            'format': 'json'},
-                                   timeout=10)
+                                   timeout=5)
 
     response.raise_for_status()  # If the status code indicates an error, raise a HTTPError, which is itself a RequestException, based on the builtin IOError
     response_data = response.json().get('response', {})
