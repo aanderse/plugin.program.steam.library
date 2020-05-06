@@ -28,7 +28,7 @@ STEAM_ARTS_TYPES = {  # img_icon_path is provided by steam API to get the icon. 
     'header': 'http://cdn.akamai.steamstatic.com/steam/apps/{appid}/header.jpg',
     'generated_bg': 'http://cdn.akamai.steamstatic.com/steam/apps/{appid}/page_bg_generated_v6b.jpg',  # Auto generated background with a shade of blue.
     'icon': 'https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/{appid}/{img_icon_path}.jpg',
-    'logo': 'http://cdn.akamai.steamstatic.com/steam/apps/{appid}/logo.png'  # Can return 404
+    'clearlogo': 'http://cdn.akamai.steamstatic.com/steam/apps/{appid}/logo.png'  # Can return 404
 }
 
 # Dictionary containing for each art type, a url for the art (to format with appid / img_icon_path afterwards), and a fallback art type.
@@ -42,7 +42,7 @@ ARTS_ASSIGNMENTS = {
     'landscape': {'url': STEAM_ARTS_TYPES['header'], 'fallback': None},
     'thumb': {'url': STEAM_ARTS_TYPES['header'], 'fallback': None},
     'icon': {'url': STEAM_ARTS_TYPES['icon'], 'fallback': None},
-    'clearlogo': {'url': STEAM_ARTS_TYPES['logo'], 'fallback': None}
+    'clearlogo': {'url': STEAM_ARTS_TYPES['clearlogo'], 'fallback': None}
 }
 
 
