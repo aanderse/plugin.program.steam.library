@@ -39,6 +39,10 @@
             v0.6.3 (2020-03-08)
             - various bug fixes thanks to @AmineI
             - add plugin to games provider list
+            v0.7.0 (2020-05-06)
+            - added support for more arts types and views for games, such as posters
+            - added play time information and sorting games by play time
+            - Offline support of the game lists, with a caching mechanism of the Steam API responses
         </news>
         <assets>
             <icon>icon.png</icon>
