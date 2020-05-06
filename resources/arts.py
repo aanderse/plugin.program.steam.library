@@ -5,7 +5,7 @@ import os
 import requests
 import requests_cache
 
-from util import show_error
+from util import log
 
 __addon__ = xbmcaddon.Addon()
 artFallbackEnabled = __addon__.getSetting("enable-art-fallback") == 'true'  # Kodi stores boolean settings as strings
@@ -88,8 +88,7 @@ def resolve_art_url(art_type, appid, img_icon_path='', art_fallback_enabled=artF
             requested_art = ARTS_ASSIGNMENTS.get(fallback_art_type, None)  # Art data will be None if the fallback_art_type does not exist in the art_urls dict
 
     if valid_art_url is None:  # If the previous loop could not find a valid media url among the defined art types
-        show_error(None, "Issue obtaining a media", display_notification=False)
-        return
+        log("Issue resolving media {0} for app id {1}".format(art_type, appid))
 
     return valid_art_url
 
