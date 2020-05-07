@@ -230,7 +230,7 @@ def main():
 
     if __addon__.getSetting('version') == '':
         # first time run, store version
-        __addon__.setSetting('version', '0.6.0')
+        __addon__.setSetting('version', __addon__.getAddonInfo('version'))
 
     # prompt the user to configure the plugin with their steam details
     if not all_required_credentials_available():
