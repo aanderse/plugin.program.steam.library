@@ -6,14 +6,14 @@ from datetime import timedelta
 import requests
 import requests_cache
 
-from util import log
+from .util import log
 
 __addon__ = xbmcaddon.Addon()
 artFallbackEnabled = __addon__.getSetting("enable-art-fallback") == 'true'  # Kodi stores boolean settings as strings
 monthsBeforeArtsExpiration = int(__addon__.getSetting("arts-expire-after-months"))  # Default is 2 months
 
 # define the cache file to reside in the ..\Kodi\userdata\addon_data\(your addon)
-addonUserDataFolder = xbmc.translatePath(__addon__.getAddonInfo('profile')).decode('utf-8')
+addonUserDataFolder = xbmc.translatePath(__addon__.getAddonInfo('profile'))
 ART_AVAILABILITY_CACHE_FILE = xbmc.translatePath(os.path.join(addonUserDataFolder, 'requests_cache_arts'))
 
 cached_requests = requests_cache.core.CachedSession(ART_AVAILABILITY_CACHE_FILE, backend='sqlite',

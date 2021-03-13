@@ -3,10 +3,10 @@ import routing
 import sys
 import xbmcplugin
 
-import arts
-import registry
-import steam
-from util import *
+from . import arts
+from . import registry
+from . import steam
+from .util import *
 
 __addon__ = xbmcaddon.Addon()
 

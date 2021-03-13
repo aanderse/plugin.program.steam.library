@@ -4,7 +4,7 @@ get registry values for steam games
 
 import os
 import xbmc
-from util import *
+from .util import *
 
 if os.name == 'nt':
     import _winreg
