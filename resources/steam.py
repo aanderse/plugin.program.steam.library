@@ -10,13 +10,13 @@ import xbmcplugin
 import requests
 import requests_cache
 
-from util import log
+from .util import log
 
 __addon__ = xbmcaddon.Addon()
 minutesBeforeGamesListsExpiration = int(__addon__.getSetting("games-expire-after-minutes"))  # Default is 3 days
 
 # define the cache file to reside in the ..\Kodi\userdata\addon_data\(your addon)
-addonUserDataFolder = xbmc.translatePath(__addon__.getAddonInfo('profile')).decode('utf-8')
+addonUserDataFolder = xbmc.translatePath(__addon__.getAddonInfo('profile'))
 STEAM_GAMES_CACHE_FILE = xbmc.translatePath(os.path.join(addonUserDataFolder, 'requests_cache_games'))
 
 # cache expires after: 86400=1 day   604800=7 days

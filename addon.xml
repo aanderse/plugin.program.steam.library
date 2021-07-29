@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.program.steam.library" name="Steam Library" version="0.7.0" provider-name="aanderse">
+<addon id="plugin.program.steam.library" name="Steam Library" version="0.8.0" provider-name="aanderse">
     <requires>
-        <import addon="xbmc.python" version="2.19.0" />
+        <import addon="xbmc.python" version="3.0.0" />
         <import addon="script.module.requests" version="2.18.4" />
         <import addon="script.module.requests-cache" version="0.4.13" />
         <import addon="script.module.routing" version="0.2.0"/>
@@ -43,6 +43,8 @@
             - added support for more arts types and views for games, such as posters
             - added play time information and sorting games by play time
             - Offline support of the game lists, with a caching mechanism of the Steam API responses
+            v0.8.0 (2021-03-12)
+            - ported to kodi 19.x
         </news>
         <assets>
             <icon>icon.png</icon>

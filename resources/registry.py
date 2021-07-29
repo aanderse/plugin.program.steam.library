@@ -4,10 +4,10 @@ get registry values for steam games
 
 import os
 import xbmc
-from util import *
+from .util import *
 
 if os.name == 'nt':
-    import _winreg
+    import winreg
 
 
 # https://github.com/lutris/lutris/blob/master/lutris/util/steam.py
@@ -50,10 +50,10 @@ def is_installed_win(app_id):
     :return: True if the app is installed, false otherwise
     """
     try:
-        app = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER, "Software\\Valve\\Steam\\Apps\\" + app_id)
-        print(_winreg.QueryInfoKey(app)[1])
-        for i in range(_winreg.QueryInfoKey(app)[1]):
-            name, value, type = _winreg.EnumValue(app, i)
+        app = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Software\\Valve\\Steam\\Apps\\" + app_id)
+        print(winreg.QueryInfoKey(app)[1])
+        for i in range(winreg.QueryInfoKey(app)[1]):
+            name, value, type = winreg.EnumValue(app, i)
             if name == "Installed":
                 return value == 1
 
@@ -73,10 +73,10 @@ def get_installed_steam_apps(registry_path):
 
     if os.name == 'nt':
         try:
-            apps = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER, "Software\\Valve\\Steam\\Apps")
-            print(_winreg.QueryInfoKey(apps)[0])
-            for i in range(_winreg.QueryInfoKey(apps)[0]):
-                app_id = _winreg.EnumKey(apps, i)
+            apps = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Software\\Valve\\Steam\\Apps")
+            print(winreg.QueryInfoKey(apps)[0])
+            for i in range(winreg.QueryInfoKey(apps)[0]):
+                app_id = winreg.EnumKey(apps, i)
                 if is_installed_win(app_id):
                     installed_apps.append(app_id)
 
