@@ -2,8 +2,8 @@
 <addon id="plugin.program.steam.library" name="Steam Library" version="0.8.1" provider-name="aanderse">
     <requires>
         <import addon="xbmc.python" version="3.0.0" />
-        <import addon="script.module.requests" version="2.18.4" />
-        <import addon="script.module.requests-cache" version="0.4.13" />
+        <import addon="script.module.requests" version="2.22.0" />
+        <import addon="script.module.requests-cache" version="0.5.2" />
         <import addon="script.module.routing" version="0.2.0"/>
     </requires>
     <extension point="xbmc.python.pluginsource" library="addon.py">
