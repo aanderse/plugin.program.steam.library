@@ -98,4 +98,14 @@ def delete_cache():
     """
     Deletes the cache containing the data about which art types are available or not
     """
-    os.remove(ART_AVAILABILITY_CACHE_FILE + ".sqlite")
+    # If Kodi's request-cache module is updated to >0.7.3 , we will only need to issue cached_requests.cache.clear() which will handle all scenarios. Until then, we must recreate the backend ourselves    
+    try:
+        cached_requests.cache.clear()
+    except Exception:
+        log('Failed to clear cache. Attempting manual deletion')
+        try:
+            os.remove(ART_AVAILABILITY_CACHE_FILE + ".sqlite")
+        except:
+            log('Failed to delete cache file')
+        cached_requests.cache.responses = requests_cache.backends.storage.dbdict.DbPickleDict(ART_AVAILABILITY_CACHE_FILE + ".sqlite", 'responses', fast_save=True)
+        cached_requests.cache.keys_map = requests_cache.backends.storage.dbdict.DbDict(ART_AVAILABILITY_CACHE_FILE + ".sqlite", 'urls')

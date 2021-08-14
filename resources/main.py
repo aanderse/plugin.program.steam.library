@@ -232,6 +232,22 @@ def main():
         # first time run, store version
         __addon__.setSetting('version', __addon__.getAddonInfo('version'))
 
+    else:
+        previous_version= __addon__.getSetting('version').split(".")
+        previous_version= list(map(int, previous_version))
+
+        new_version= __addon__.getSetting('version').split(".")
+        new_version= list(map(int,new_version))
+
+        if previous_version[0] == 0 & previous_version[1] < 8:
+            #Starting with 0.8.0, the cache encoding changed and previous caches needs to be reset.
+            delete_cache()
+
+        # Insert version upgrade mechanisms here before the following call
+
+        __addon__.setSetting('version', __addon__.getAddonInfo('version'))
+
+
     # prompt the user to configure the plugin with their steam details
     if not all_required_credentials_available():
         __addon__.openSettings()

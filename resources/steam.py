@@ -20,7 +20,7 @@ addonUserDataFolder = xbmc.translatePath(__addon__.getAddonInfo('profile'))
 STEAM_GAMES_CACHE_FILE = xbmc.translatePath(os.path.join(addonUserDataFolder, 'requests_cache_games'))
 
 # cache expires after: 86400=1 day   604800=7 days
-cached_requests = requests_cache.core.CachedSession(STEAM_GAMES_CACHE_FILE, backend='sqlite',
+cached_requests = requests_cache.CachedSession(STEAM_GAMES_CACHE_FILE, backend='sqlite',
                                                     expire_after=60 * minutesBeforeGamesListsExpiration,
                                                     old_data_on_error=True)
 
@@ -106,4 +106,18 @@ def get_user_games(steam_api_key, steam_user_id, recent_only=False):
 
 
 def delete_cache():
-    os.remove(STEAM_GAMES_CACHE_FILE + ".sqlite")
+    """
+    Deletes the cache containing the data about which games are owned or not
+    """
+    # If Kodi's request-cache module is updated to >0.7.3 , we will only need to issue cached_requests.cache.clear() which will handle all scenarios. Until then, we must recreate the backend ourselves
+    try:
+        cached_requests.cache.clear()
+    except Exception:
+        log('Failed to clear cache. Attempting manual deletion')
+        try:
+            os.remove(STEAM_GAMES_CACHE_FILE + ".sqlite")
+        except:
+            log('Failed to delete & recreate cache')
+        cached_requests.cache.responses = requests_cache.backends.storage.dbdict.DbPickleDict(STEAM_GAMES_CACHE_FILE + ".sqlite", 'responses', fast_save=True)
+        cached_requests.cache.keys_map = requests_cache.backends.storage.dbdict.DbDict(STEAM_GAMES_CACHE_FILE + ".sqlite", 'urls')
+        
