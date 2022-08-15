@@ -4,6 +4,7 @@ get registry values for steam games
 
 import os
 import xbmc
+import io
 from .util import *
 
 if os.name == 'nt':
@@ -84,7 +85,7 @@ def get_installed_steam_apps(registry_path):
             show_error(e, "Error while reading Windows registry")
             pass
     else:
-        with open(registry_path, 'r') as file:
+        with io.open(registry_path, 'r', encoding="utf-8") as file:
             try:
                 vdf = vdf_parse(file, {})
                 apps = vdf['registry']['hkcu']['software']['valve']['steam']['apps']
