@@ -1,5 +1,5 @@
-import xbmc
 import xbmcaddon
+import xbmcvfs
 
 import os
 from datetime import timedelta
@@ -13,8 +13,8 @@ artFallbackEnabled = __addon__.getSetting("enable-art-fallback") == 'true'  # Ko
 monthsBeforeArtsExpiration = int(__addon__.getSetting("arts-expire-after-months"))  # Default is 2 months
 
 # define the cache file to reside in the ..\Kodi\userdata\addon_data\(your addon)
-addonUserDataFolder = xbmc.translatePath(__addon__.getAddonInfo('profile'))
-ART_AVAILABILITY_CACHE_FILE = xbmc.translatePath(os.path.join(addonUserDataFolder, 'requests_cache_arts'))
+addonUserDataFolder = xbmcvfs.translatePath(__addon__.getAddonInfo('profile'))
+ART_AVAILABILITY_CACHE_FILE = xbmcvfs.translatePath(os.path.join(addonUserDataFolder, 'requests_cache_arts'))
 
 cached_requests = requests_cache.core.CachedSession(ART_AVAILABILITY_CACHE_FILE, backend='sqlite',
                                                     expire_after= timedelta(weeks=4*monthsBeforeArtsExpiration),
