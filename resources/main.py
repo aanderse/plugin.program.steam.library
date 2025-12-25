@@ -233,13 +233,13 @@ def main():
         __addon__.setSetting('version', __addon__.getAddonInfo('version'))
 
     else:
-        previous_version= __addon__.getSetting('version').split(".")
-        previous_version= list(map(int, previous_version))
+        previous_version = __addon__.getSetting('version').split(".")
+        previous_version = list(map(int, previous_version))
 
-        new_version= __addon__.getSetting('version').split(".")
-        new_version= list(map(int,new_version))
+        new_version = __addon__.getAddonInfo('version').split(".")
+        new_version = list(map(int, new_version))
 
-        if previous_version[0] == 0 & previous_version[1] < 8:
+        if previous_version[0] == 0 and previous_version[1] < 8:
             #Starting with 0.8.0, the cache encoding changed and previous caches needs to be reset.
             delete_cache()
 
