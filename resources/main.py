@@ -5,6 +5,7 @@ import time
 import xbmcplugin
 
 from . import arts
+from . import metadata
 from . import registry
 from . import steam
 from .util import *
@@ -134,6 +135,7 @@ def run(appid):
 def delete_cache():
     steam.delete_cache()
     arts.delete_cache()
+    metadata.delete_cache()
 
 
 def create_directory_items(app_entries):
@@ -154,15 +156,44 @@ def create_directory_items(app_entries):
     # Resolve all artwork URLs in parallel (with fallback checking)
     all_art = arts.resolve_art_for_all_games(app_entries)
 
+    # Fetch metadata for all games (cached or from API)
+    appids = [str(app['appid']) for app in app_entries]
+    all_metadata = metadata.get_metadata_for_games(appids)
+
     directory_items = []
     for app_entry in app_entries:
         appid = str(app_entry['appid'])
         name = app_entry['name']
+        game_metadata = all_metadata.get(appid, {})
 
         run_url = plugin.url_for(run, appid=appid)
         item = xbmcgui.ListItem(name)
         item.setUniqueIDs({'steam': appid, 'steam_img_icon': app_entry['img_icon_url']})
-        item.setInfo('video', {'playcount': app_entry.get('playtime_forever', 0)})
+
+        # Build info labels with metadata
+        info_labels = {
+            'title': name,
+            'playcount': app_entry.get('playtime_forever', 0),
+        }
+
+        if game_metadata:
+            if game_metadata.get('short_description'):
+                info_labels['plot'] = game_metadata['short_description']
+            if game_metadata.get('genres'):
+                info_labels['genre'] = ', '.join(game_metadata['genres'])
+            if game_metadata.get('developers'):
+                info_labels['studio'] = game_metadata['developers'][0]
+            if game_metadata.get('release_date'):
+                # Try to extract year from release date
+                try:
+                    year = int(game_metadata['release_date'].split()[-1])
+                    info_labels['year'] = year
+                except:
+                    pass
+            if game_metadata.get('metacritic'):
+                info_labels['rating'] = game_metadata['metacritic'] / 10.0
+
+        item.setInfo('video', info_labels)
         item.setContentLookup(False)  # Tells Kodi not to send HEAD requests (used to determine MIME type for example) to the item's run URL.
 
         item.addContextMenuItems([('Play', 'RunPlugin(' + run_url + ')'),
