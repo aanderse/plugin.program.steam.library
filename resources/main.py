@@ -181,8 +181,8 @@ def create_arts_dictionary(app_entry):
 
 
 def main():
-    log('steam-id = ' + __addon__.getSetting('steam-id'))
-    log('steam-key = ' + __addon__.getSetting('steam-key'))
+    log('steam-id = ' + ('*' * 17 if __addon__.getSetting('steam-id') else '(not set)'))
+    log('steam-key = ' + ('*' * 32 if __addon__.getSetting('steam-key') else '(not set)'))
     log('steam-exe = ' + __addon__.getSetting('steam-exe'))
     log('steam-path = ' + __addon__.getSetting('steam-path'))
 
