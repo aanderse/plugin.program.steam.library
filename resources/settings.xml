@@ -1,24 +1,84 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<settings>
-    <category label="Required Steam Details">
-        <setting id="steam-id" type="text" label="Your Steam user id"/>
-        <setting id="steam-key" type="text" label="Your Steam web API key"/>
-        <setting id="steam-exe" type="executable" label="Your Steam executable file (Steam.exe)"/>
-        <setting id="steam-path" type="folder" label="Your Steam folder (contains registry.vdf)"/>
-        <setting id="steam-args" type="text" label="Arguments to pass to your Steam executable"/>
-    </category>
-    <category label="Cache Management">
-        <setting id="games-expire-after-minutes" type="number" default="4320"
-                 label="Number of minutes before expiration of the games lists cache"/>
-        <setting id="arts-expire-after-months" type="number" default="2"
-                 label="Number of months before expiration of the arts availability cache"/>
-        <setting id="delete-cache" type="action" action="RunPlugin(plugin://plugin.program.steam.library/delete_cache)"
-                 label="Clean available games and arts cache"/>
-    </category>
-    <category label="Debugging">
-        <setting id="debug" type="bool" label="Enable debugging mode" default="false"/>
-        <setting id="enable-art-fallback" type="bool" default="true"
-                 label="Fallback to another art type if a game has missing art. First launch may be longer for large libraries."/>
-        <setting id="version" type="text" label="Internal version number, do not modify" visible="false"/>
-    </category>
+<settings version="1">
+    <section id="plugin.program.steam.library">
+        <category id="required" label="30100">
+            <group id="1">
+                <setting id="steam-id" type="string" label="30000">
+                    <level>0</level>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="edit" format="string"/>
+                </setting>
+                <setting id="steam-key" type="string" label="30001" option="hidden">
+                    <level>0</level>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="edit" format="string"/>
+                </setting>
+                <setting id="steam-exe" type="path" label="30002">
+                    <level>0</level>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="button" format="file"/>
+                </setting>
+                <setting id="steam-path" type="path" label="30003">
+                    <level>0</level>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="button" format="path"/>
+                </setting>
+                <setting id="steam-args" type="string" label="30004">
+                    <level>0</level>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="edit" format="string"/>
+                </setting>
+            </group>
+        </category>
+        <category id="cache" label="30101">
+            <group id="2">
+                <setting id="games-expire-after-minutes" type="integer" label="30010">
+                    <level>0</level>
+                    <default>4320</default>
+                    <control type="edit" format="integer"/>
+                </setting>
+                <setting id="arts-expire-after-months" type="integer" label="30011">
+                    <level>0</level>
+                    <default>2</default>
+                    <control type="edit" format="integer"/>
+                </setting>
+                <setting id="delete-cache" type="action" label="30012">
+                    <level>0</level>
+                    <data>RunPlugin(plugin://plugin.program.steam.library/delete_cache)</data>
+                    <control type="button" format="action"/>
+                </setting>
+            </group>
+        </category>
+        <category id="debugging" label="30102">
+            <group id="3">
+                <setting id="debug" type="boolean" label="30020">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="enable-art-fallback" type="boolean" label="30021">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="version" type="string" visible="false">
+                    <level>0</level>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="edit" format="string"/>
+                </setting>
+            </group>
+        </category>
+    </section>
 </settings>
