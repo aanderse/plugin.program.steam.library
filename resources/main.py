@@ -1,6 +1,7 @@
 import os
 import routing
 import sys
+import time
 import xbmcplugin
 
 from . import arts
@@ -25,11 +26,15 @@ def index():
 
 @plugin.route('/all')
 def all_games():
+    start_time = time.time()
+
     if not all_required_credentials_available():
         return
 
     try:
+        api_start = time.time()
         steam_games_details = steam.get_user_games(__addon__.getSetting('steam-key'), __addon__.getSetting('steam-id'))
+        log("Steam API call took {:.2f}s".format(time.time() - api_start))
 
     except IOError as e:
         # something went wrong, can't scan the steam library
@@ -37,12 +42,17 @@ def all_games():
                       'If this problem persists please contact support.')
         return
 
+    items_start = time.time()
     directory_items = create_directory_items(steam_games_details)
+    log("Creating directory items took {:.2f}s for {} games".format(time.time() - items_start, len(directory_items)))
+
     xbmcplugin.addDirectoryItems(plugin.handle, directory_items)
 
     xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_LABEL)
     xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_PLAYCOUNT)
     xbmcplugin.endOfDirectory(plugin.handle, succeeded=True)
+
+    log("Total /all route took {:.2f}s".format(time.time() - start_time))
 
 
 @plugin.route('/installed')
@@ -138,6 +148,12 @@ def create_directory_items(app_entries):
     xbmcplugin.setContent(plugin.handle, "movies")
     # TODO setContent to games when more skins support this content type.
 
+    # Convert to list to allow multiple iterations and get count
+    app_entries = list(app_entries)
+
+    # Resolve all artwork URLs in parallel (with fallback checking)
+    all_art = arts.resolve_art_for_all_games(app_entries)
+
     directory_items = []
     for app_entry in app_entries:
         appid = str(app_entry['appid'])
@@ -153,31 +169,12 @@ def create_directory_items(app_entries):
                                   ('Install', 'RunPlugin(' + plugin.url_for(install, appid=appid) + ')')],
                                  replaceItems=True)  # Since we set the content type to "movies", default movie context elements may appear. We replace them.
 
-        art_dictionary = create_arts_dictionary(app_entry)
-        item.setArt(art_dictionary)
+        # Use pre-resolved artwork
+        item.setArt(all_art.get(appid, {}))
 
         directory_items.append((run_url, item, False))
 
     return directory_items
-
-
-def create_arts_dictionary(app_entry):
-    """
-    Creates a dictionary of arts keys and their associated links, for a given app entry.
-    :param app_entry: dictionary of app information, containing at least the keys : appid, img_icon_url, img_logo_url
-    :return: dictionary of arts for the app.
-    """
-
-    appid = str(app_entry['appid'])
-    img_icon_url = app_entry['img_icon_url']
-    art_dictionary = {}
-
-    # Multiple fanart https://kodi.wiki/view/Artwork_types#fanart.23
-    SUPPORTED_ART_TYPES = ['poster', 'landscape', 'banner', 'clearlogo', 'thumb', 'fanart', 'fanart1', 'fanart2', 'icon']
-
-    for art_type in SUPPORTED_ART_TYPES:
-        art_dictionary[art_type] = arts.resolve_art_url(art_type, appid, img_icon_url)
-    return art_dictionary
 
 
 def main():
