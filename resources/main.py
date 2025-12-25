@@ -64,7 +64,7 @@ def installed_games():
                       'If this problem persists please contact support.')
         return
 
-    installed_appids = registry.get_installed_steam_apps(os.path.join(__addon__.getSetting('steam-path'), 'registry.vdf'))
+    installed_appids = registry.get_installed_steam_apps(__addon__.getSetting('steam-path'))
 
     # filter out any applications not listed as installed
     steam_installed_games = filter(lambda app_entry: str(app_entry['appid']) in installed_appids, steam_games_details)

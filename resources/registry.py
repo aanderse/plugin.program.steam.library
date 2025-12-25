@@ -1,100 +1,155 @@
-'''
-get registry values for steam games
-'''
+"""
+Get installed Steam games across platforms.
+
+Supports:
+- Linux: ~/.steam, ~/.local/share/Steam
+- macOS: ~/Library/Application Support/Steam
+- Windows: Registry + Program Files
+"""
 
 import os
-import xbmc
-import io
-from .util import *
+import sys
+
+from .util import log, show_error
+
+# Add bundled libraries to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'lib'))
+import vdf
 
 if os.name == 'nt':
     import winreg
 
 
-# https://github.com/lutris/lutris/blob/master/lutris/util/steam.py
-def vdf_parse(steam_config_file, config):
-    """Parse a Steam config file and return the contents as a dict with lowercase keys.
-    The motivation behind returning lowercase keys is that the case is not consistent between environments it seems.
+def get_default_steam_paths():
     """
-    line = " "
-    while line:
-        try:
-            line = steam_config_file.readline()
-        except UnicodeDecodeError:
-            log("Error while reading Steam VDF file {}. Returning {}".format(steam_config_file, config), xbmc.LOGERROR)
-            return config
-        if not line or line.strip() == "}":
-            return config
-        while not line.strip().endswith("\""):
-            nextline = steam_config_file.readline()
-            if not nextline:
-                break
-            line = line[:-1] + nextline
+    Returns a list of possible Steam installation paths for the current platform.
+    Used as fallback when steam-path setting is not configured.
+    """
+    paths = []
 
-        line_elements = line.strip().split("\"")
-        if len(line_elements) == 3:
-            key = line_elements[1].lower()
-            steam_config_file.readline()  # skip '{'
-            config[key] = vdf_parse(steam_config_file, {})
-        else:
-            try:
-                config[line_elements[1].lower()] = line_elements[3]
-            except IndexError:
-                log('Malformed config file: {}'.format(line), xbmc.LOGERROR)
-    return config
+    if sys.platform == 'darwin':
+        # macOS
+        paths.append(os.path.expanduser('~/Library/Application Support/Steam'))
+    elif os.name == 'nt':
+        # Windows - try to get from registry first
+        try:
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r'Software\Valve\Steam')
+            steam_path, _ = winreg.QueryValueEx(key, 'SteamPath')
+            winreg.CloseKey(key)
+            if steam_path:
+                paths.append(steam_path)
+        except WindowsError:
+            pass
+        # Fallback paths
+        paths.extend([
+            os.path.expandvars(r'%ProgramFiles(x86)%\Steam'),
+            os.path.expandvars(r'%ProgramFiles%\Steam'),
+        ])
+    else:
+        # Linux and other Unix-like systems
+        paths.extend([
+            os.path.expanduser('~/.steam/steam'),
+            os.path.expanduser('~/.steam'),
+            os.path.expanduser('~/.local/share/Steam'),
+        ])
+
+    return paths
+
+
+def find_libraryfolders_vdf(steam_path):
+    """
+    Finds the libraryfolders.vdf file given a Steam path.
+    Returns the path if found, None otherwise.
+    """
+    # Handle symlinks (common on Linux where ~/.steam/steam -> ~/.local/share/Steam)
+    if os.path.islink(steam_path):
+        steam_path = os.path.realpath(steam_path)
+
+    possible_locations = [
+        os.path.join(steam_path, 'steamapps', 'libraryfolders.vdf'),
+        os.path.join(steam_path, 'steam', 'steamapps', 'libraryfolders.vdf'),
+        os.path.join(steam_path, 'Steam', 'steamapps', 'libraryfolders.vdf'),
+    ]
+
+    for path in possible_locations:
+        if os.path.isfile(path):
+            return path
+
+    return None
 
 
 def is_installed_win(app_id):
     """
-    Gets whether an app with the given app id is installed, on Windows
+    Gets whether an app with the given app id is installed, on Windows.
     :param app_id: app_id to check
     :return: True if the app is installed, false otherwise
     """
     try:
-        app = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Software\\Valve\\Steam\\Apps\\" + app_id)
-        print(winreg.QueryInfoKey(app)[1])
+        app = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r'Software\Valve\Steam\Apps\{}'.format(app_id))
         for i in range(winreg.QueryInfoKey(app)[1]):
-            name, value, type = winreg.EnumValue(app, i)
-            if name == "Installed":
+            name, value, _ = winreg.EnumValue(app, i)
+            if name == 'Installed':
+                winreg.CloseKey(app)
                 return value == 1
-
+        winreg.CloseKey(app)
     except WindowsError:
         pass
-    # Sometimes the key "Installed" does not exist, and we get out of the loop without returning anything,so we return False at the end of the function
     return False
 
 
-def get_installed_steam_apps(registry_path):
+def get_installed_steam_apps(steam_path):
     """
-    Obtains the steam games/apps installed on the computer.
-    :param registry_path: Path to the registry.vdf file
-    :return: an array of appids that are installed.
+    Obtains the Steam games/apps installed on the computer.
+    :param steam_path: Path to the Steam folder (from settings, or auto-detected)
+    :return: a list of appids that are installed.
     """
     installed_apps = []
 
+    # Build list of paths to try: user setting first, then defaults
+    paths_to_try = []
+    if steam_path and os.path.isdir(steam_path):
+        paths_to_try.append(steam_path)
+    paths_to_try.extend(get_default_steam_paths())
+
+    # Windows: Try registry first
     if os.name == 'nt':
         try:
-            apps = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Software\\Valve\\Steam\\Apps")
-            print(winreg.QueryInfoKey(apps)[0])
-            for i in range(winreg.QueryInfoKey(apps)[0]):
+            apps = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r'Software\Valve\Steam\Apps')
+            num_apps = winreg.QueryInfoKey(apps)[0]
+            log("Found {} apps in Windows registry".format(num_apps))
+            for i in range(num_apps):
                 app_id = winreg.EnumKey(apps, i)
                 if is_installed_win(app_id):
                     installed_apps.append(app_id)
+            winreg.CloseKey(apps)
+            return installed_apps
+        except WindowsError:
+            log("Windows registry method failed, falling back to libraryfolders.vdf")
 
-        except WindowsError as e:
-            show_error(e, "Error while reading Windows registry")
-            pass
-    else:
-        with io.open(registry_path, 'r', encoding="utf-8") as file:
+    # Try libraryfolders.vdf method (all platforms)
+    for path in paths_to_try:
+        libraryfolders_path = find_libraryfolders_vdf(path)
+        if libraryfolders_path:
             try:
-                vdf = vdf_parse(file, {})
-                apps = vdf['registry']['hkcu']['software']['valve']['steam']['apps']
+                with open(libraryfolders_path, 'r', encoding='utf-8') as f:
+                    data = vdf.load(f)
 
-                # apparently case of 'installed' differs depending on ... ?
-                # We create a list of the apps that have a "installed" key equal to "1".
-                installed_apps = [appid for (appid, information) in apps.items() if (information.get('installed', '0') == '1')]
-            except KeyError as e:
-                show_error(e, "Error finding the values from registry.vdf")
-                pass
+                libraryfolders = data.get('libraryfolders', {})
 
+                # Each library folder entry (0, 1, 2, etc.) contains an 'apps' dict
+                for folder_id, folder_info in libraryfolders.items():
+                    if isinstance(folder_info, dict) and 'apps' in folder_info:
+                        installed_apps.extend(folder_info['apps'].keys())
+
+                log("Found {} installed apps via {}".format(len(installed_apps), libraryfolders_path))
+                return installed_apps
+
+            except (SyntaxError, IOError, KeyError) as e:
+                log("Error reading {}: {}".format(libraryfolders_path, e))
+                continue
+
+    show_error(
+        FileNotFoundError("libraryfolders.vdf not found"),
+        "Could not find Steam library folders. Please check your Steam path setting."
+    )
     return installed_apps
