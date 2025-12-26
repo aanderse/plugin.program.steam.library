@@ -168,32 +168,29 @@ def create_directory_items(app_entries):
 
         run_url = plugin.url_for(run, appid=appid)
         item = xbmcgui.ListItem(name)
-        item.setUniqueIDs({'steam': appid, 'steam_img_icon': app_entry['img_icon_url']})
+        info_tag = item.getVideoInfoTag()
+        info_tag.setUniqueIDs({'steam': appid, 'steam_img_icon': app_entry['img_icon_url']})
 
-        # Build info labels with metadata
-        info_labels = {
-            'title': name,
-            'playcount': app_entry.get('playtime_forever', 0),
-        }
+        # Set video info using InfoTagVideo setters
+        info_tag.setTitle(name)
+        info_tag.setPlaycount(app_entry.get('playtime_forever', 0))
 
         if game_metadata:
             if game_metadata.get('short_description'):
-                info_labels['plot'] = game_metadata['short_description']
+                info_tag.setPlot(game_metadata['short_description'])
             if game_metadata.get('genres'):
-                info_labels['genre'] = ', '.join(game_metadata['genres'])
+                info_tag.setGenres(game_metadata['genres'])
             if game_metadata.get('developers'):
-                info_labels['studio'] = game_metadata['developers'][0]
+                info_tag.setStudios(game_metadata['developers'])
             if game_metadata.get('release_date'):
                 # Try to extract year from release date
                 try:
                     year = int(game_metadata['release_date'].split()[-1])
-                    info_labels['year'] = year
+                    info_tag.setYear(year)
                 except:
                     pass
             if game_metadata.get('metacritic'):
-                info_labels['rating'] = game_metadata['metacritic'] / 10.0
-
-        item.setInfo('video', info_labels)
+                info_tag.setRating(game_metadata['metacritic'] / 10.0)
         item.setContentLookup(False)  # Tells Kodi not to send HEAD requests (used to determine MIME type for example) to the item's run URL.
 
         item.addContextMenuItems([('Play', 'RunPlugin(' + run_url + ')'),
