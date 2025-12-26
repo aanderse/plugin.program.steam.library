@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.program.steam.library" name="Steam Library" version="0.9.0" provider-name="aanderse">
+<addon id="plugin.program.steam.library" name="Steam Library" version="0.10.0" provider-name="aanderse">
     <requires>
         <import addon="xbmc.python" version="3.0.0" />
         <import addon="script.module.requests" version="2.22.0" />
@@ -48,6 +48,13 @@
             - ported to kodi 19.x
             v0.9.0 (2023-06-05)
             - ported to kodi 20.x
+            v0.10.0 (2025-12-26)
+            - added game metadata (descriptions, genres, ratings) via background service
+            - improved artwork loading with parallel requests and fallback support
+            - fixed installed games detection for modern Steam (libraryfolders.vdf)
+            - fixed credential validation and version upgrade bugs
+            - updated settings to Kodi 19+ format
+            - security: masked credentials in debug logs
         </news>
         <assets>
             <icon>icon.png</icon>
