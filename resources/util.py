@@ -29,4 +29,4 @@ def all_required_credentials_available():
 
     :returns: A boolean, true if the steam-id and steam-key add-on settings were set.
     """
-    return __addon__.getSetting('steam-id') != '' or __addon__.getSetting('steam-key') != ''
+    return __addon__.getSetting('steam-id') != '' and __addon__.getSetting('steam-key') != ''

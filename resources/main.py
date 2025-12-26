@@ -1,9 +1,11 @@
 import os
 import routing
 import sys
+import time
 import xbmcplugin
 
 from . import arts
+from . import metadata
 from . import registry
 from . import steam
 from .util import *
@@ -25,11 +27,15 @@ def index():
 
 @plugin.route('/all')
 def all_games():
+    start_time = time.time()
+
     if not all_required_credentials_available():
         return
 
     try:
+        api_start = time.time()
         steam_games_details = steam.get_user_games(__addon__.getSetting('steam-key'), __addon__.getSetting('steam-id'))
+        log("Steam API call took {:.2f}s".format(time.time() - api_start))
 
     except IOError as e:
         # something went wrong, can't scan the steam library
@@ -37,12 +43,17 @@ def all_games():
                       'If this problem persists please contact support.')
         return
 
+    items_start = time.time()
     directory_items = create_directory_items(steam_games_details)
+    log("Creating directory items took {:.2f}s for {} games".format(time.time() - items_start, len(directory_items)))
+
     xbmcplugin.addDirectoryItems(plugin.handle, directory_items)
 
     xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_LABEL)
     xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_PLAYCOUNT)
     xbmcplugin.endOfDirectory(plugin.handle, succeeded=True)
+
+    log("Total /all route took {:.2f}s".format(time.time() - start_time))
 
 
 @plugin.route('/installed')
@@ -64,7 +75,7 @@ def installed_games():
                       'If this problem persists please contact support.')
         return
 
-    installed_appids = registry.get_installed_steam_apps(os.path.join(__addon__.getSetting('steam-path'), 'registry.vdf'))
+    installed_appids = registry.get_installed_steam_apps(__addon__.getSetting('steam-path'))
 
     # filter out any applications not listed as installed
     steam_installed_games = filter(lambda app_entry: str(app_entry['appid']) in installed_appids, steam_games_details)
@@ -124,6 +135,7 @@ def run(appid):
 def delete_cache():
     steam.delete_cache()
     arts.delete_cache()
+    metadata.delete_cache()
 
 
 def create_directory_items(app_entries):
@@ -138,51 +150,64 @@ def create_directory_items(app_entries):
     xbmcplugin.setContent(plugin.handle, "movies")
     # TODO setContent to games when more skins support this content type.
 
+    # Convert to list to allow multiple iterations and get count
+    app_entries = list(app_entries)
+
+    # Resolve all artwork URLs in parallel (with fallback checking)
+    all_art = arts.resolve_art_for_all_games(app_entries)
+
+    # Fetch metadata for all games (cached or from API)
+    appids = [str(app['appid']) for app in app_entries]
+    all_metadata = metadata.get_metadata_for_games(appids)
+
     directory_items = []
     for app_entry in app_entries:
         appid = str(app_entry['appid'])
         name = app_entry['name']
+        game_metadata = all_metadata.get(appid, {})
 
         run_url = plugin.url_for(run, appid=appid)
         item = xbmcgui.ListItem(name)
-        item.setUniqueIDs({'steam': appid, 'steam_img_icon': app_entry['img_icon_url']})
-        item.setInfo('video', {'playcount': app_entry.get('playtime_forever', 0)})
+        info_tag = item.getVideoInfoTag()
+        info_tag.setUniqueIDs({'steam': appid, 'steam_img_icon': app_entry['img_icon_url']})
+
+        # Set video info using InfoTagVideo setters
+        info_tag.setTitle(name)
+        info_tag.setPlaycount(app_entry.get('playtime_forever', 0))
+
+        if game_metadata:
+            if game_metadata.get('short_description'):
+                info_tag.setPlot(game_metadata['short_description'])
+            if game_metadata.get('genres'):
+                info_tag.setGenres(game_metadata['genres'])
+            if game_metadata.get('developers'):
+                info_tag.setStudios(game_metadata['developers'])
+            if game_metadata.get('release_date'):
+                # Try to extract year from release date
+                try:
+                    year = int(game_metadata['release_date'].split()[-1])
+                    info_tag.setYear(year)
+                except:
+                    pass
+            if game_metadata.get('metacritic'):
+                info_tag.setRating(game_metadata['metacritic'] / 10.0)
         item.setContentLookup(False)  # Tells Kodi not to send HEAD requests (used to determine MIME type for example) to the item's run URL.
 
         item.addContextMenuItems([('Play', 'RunPlugin(' + run_url + ')'),
                                   ('Install', 'RunPlugin(' + plugin.url_for(install, appid=appid) + ')')],
                                  replaceItems=True)  # Since we set the content type to "movies", default movie context elements may appear. We replace them.
 
-        art_dictionary = create_arts_dictionary(app_entry)
-        item.setArt(art_dictionary)
+        # Use pre-resolved artwork
+        item.setArt(all_art.get(appid, {}))
 
         directory_items.append((run_url, item, False))
 
     return directory_items
 
 
-def create_arts_dictionary(app_entry):
-    """
-    Creates a dictionary of arts keys and their associated links, for a given app entry.
-    :param app_entry: dictionary of app information, containing at least the keys : appid, img_icon_url, img_logo_url
-    :return: dictionary of arts for the app.
-    """
-
-    appid = str(app_entry['appid'])
-    img_icon_url = app_entry['img_icon_url']
-    art_dictionary = {}
-
-    # Multiple fanart https://kodi.wiki/view/Artwork_types#fanart.23
-    SUPPORTED_ART_TYPES = ['poster', 'landscape', 'banner', 'clearlogo', 'thumb', 'fanart', 'fanart1', 'fanart2', 'icon']
-
-    for art_type in SUPPORTED_ART_TYPES:
-        art_dictionary[art_type] = arts.resolve_art_url(art_type, appid, img_icon_url)
-    return art_dictionary
-
-
 def main():
-    log('steam-id = ' + __addon__.getSetting('steam-id'))
-    log('steam-key = ' + __addon__.getSetting('steam-key'))
+    log('steam-id = ' + ('*' * 17 if __addon__.getSetting('steam-id') else '(not set)'))
+    log('steam-key = ' + ('*' * 32 if __addon__.getSetting('steam-key') else '(not set)'))
     log('steam-exe = ' + __addon__.getSetting('steam-exe'))
     log('steam-path = ' + __addon__.getSetting('steam-path'))
 
@@ -233,13 +258,13 @@ def main():
         __addon__.setSetting('version', __addon__.getAddonInfo('version'))
 
     else:
-        previous_version= __addon__.getSetting('version').split(".")
-        previous_version= list(map(int, previous_version))
+        previous_version = __addon__.getSetting('version').split(".")
+        previous_version = list(map(int, previous_version))
 
-        new_version= __addon__.getSetting('version').split(".")
-        new_version= list(map(int,new_version))
+        new_version = __addon__.getAddonInfo('version').split(".")
+        new_version = list(map(int, new_version))
 
-        if previous_version[0] == 0 & previous_version[1] < 8:
+        if previous_version[0] == 0 and previous_version[1] < 8:
             #Starting with 0.8.0, the cache encoding changed and previous caches needs to be reset.
             delete_cache()
 

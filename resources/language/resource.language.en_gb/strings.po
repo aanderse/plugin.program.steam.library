@@ -1,0 +1,64 @@
+# Kodi Media Center language file
+# Addon Name: Steam Library
+# Addon id: plugin.program.steam.library
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: en\n"
+
+# Categories
+msgctxt "#30100"
+msgid "Required Steam Details"
+msgstr ""
+
+msgctxt "#30101"
+msgid "Cache Management"
+msgstr ""
+
+msgctxt "#30102"
+msgid "Debugging"
+msgstr ""
+
+# Required Steam Details settings
+msgctxt "#30000"
+msgid "Your Steam user id"
+msgstr ""
+
+msgctxt "#30001"
+msgid "Your Steam web API key"
+msgstr ""
+
+msgctxt "#30002"
+msgid "Your Steam executable file (Steam.exe)"
+msgstr ""
+
+msgctxt "#30003"
+msgid "Your Steam folder"
+msgstr ""
+
+msgctxt "#30004"
+msgid "Arguments to pass to your Steam executable"
+msgstr ""
+
+# Cache Management settings
+msgctxt "#30010"
+msgid "Minutes before games list cache expires"
+msgstr ""
+
+msgctxt "#30011"
+msgid "Months before arts cache expires"
+msgstr ""
+
+msgctxt "#30012"
+msgid "Clear games and arts cache"
+msgstr ""
+
+# Debugging settings
+msgctxt "#30020"
+msgid "Enable debugging mode"
+msgstr ""
+
+msgctxt "#30021"
+msgid "Enable art fallback (first launch may be slower)"
+msgstr ""
